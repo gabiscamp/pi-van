@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'core/routing/app_router.dart';
+import 'presentation/theme/app_theme.dart';
 
 void main() {
   runApp(const MainApp());
@@ -14,11 +15,8 @@ class MainApp extends StatelessWidget {
     return MaterialApp(
       title: 'PI Van',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueGrey),
-        useMaterial3: true,
-      ),
-      initialRoute: AppRoutes.splash,
+      theme: AppTheme.lightTheme(),
+      initialRoute: AppRoutes.landing,
       onGenerateRoute: AppRouter.onGenerateRoute,
     );
   }

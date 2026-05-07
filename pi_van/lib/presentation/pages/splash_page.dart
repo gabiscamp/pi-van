@@ -11,9 +11,9 @@ class SplashPage extends StatelessWidget {
       body: Center(
         child: ElevatedButton(
           onPressed: () {
-            Navigator.of(context).pushReplacementNamed(AppRoutes.login);
+            Navigator.of(context).pushReplacementNamed(AppRoutes.landing);
           },
-          child: const Text('Ir para login'),
+          child: const Text('Ir para inicio'),
         ),
       ),
     );
