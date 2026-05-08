@@ -1,8 +1,10 @@
+import 'package:pi_van/domain/enums/role_enum.dart';
+
 import '../../domain/entities/user.dart';
-import '../../domain/enums/role_enum.dart';
+
 
 class UserModel extends User {
-  const UserModel({
+  UserModel({
     required super.id,
     required super.name,
     required super.email,
@@ -10,26 +12,28 @@ class UserModel extends User {
     super.salaId,
   });
 
-  Map<String, dynamic> toMap() {
+  // ESTE É O BLOCO QUE DEVE ESTAR FALTANDO OU COM ERRO:
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    return UserModel(
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
+      email: json['email'] ?? '',
+      // Converte a String que vem do banco de volta para o Enum Role
+      role: Role.values.firstWhere(
+        (e) => e.name == json['role'],
+        orElse: () => Role.estudante,
+      ),
+      salaId: json['salaId'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
     return {
       'id': id,
       'name': name,
       'email': email,
-      'role': role.name,
+      'role': role.name, // Salva apenas o nome do enum (ex: "MOTORISTA")
       'salaId': salaId,
     };
-  }
-
-  static UserModel fromMap(Map<String, dynamic> map) {
-    return UserModel(
-      id: map['id'] as String,
-      name: map['name'] as String,
-      email: map['email'] as String,
-      role: Role.values.firstWhere(
-        (value) => value.name == map['role'],
-        orElse: () => Role.estudante,
-      ),
-      salaId: map['salaId'] as String?,
-    );
   }
 }

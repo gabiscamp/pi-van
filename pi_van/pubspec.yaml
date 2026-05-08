@@ -3,6 +3,7 @@ description: "A new Flutter project."
 publish_to: 'none'
 version: 0.1.0
 
+
 environment:
   sdk: ^3.10.7
 
@@ -10,6 +11,9 @@ dependencies:
   flutter:
     sdk: flutter
 
+  firebase_core: ^2.24.2  # ✅ Correto! Alinhado com a palavra 'flutter'.
+  firebase_auth: ^4.15.3      # Adicione esta linha (Autenticação)
+  cloud_firestore: ^4.13.6
 dev_dependencies:
   flutter_test:
     sdk: flutter

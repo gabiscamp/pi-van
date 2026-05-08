@@ -20,7 +20,7 @@ class FirebaseAuthRepository implements AuthRepository {
     required String password,
     required Role role,
   }) {
-    return remoteDataSource.register(
+    return remoteDataSource.registerUser(
       name: name,
       email: email,
       password: password,
