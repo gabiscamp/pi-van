@@ -12,6 +12,10 @@ import 'package:pi_van/presentation/pages/register_page.dart';
 import 'package:pi_van/presentation/viewmodels/auth_viewmodel.dart';
 
 
+import 'core/routing/app_router.dart';
+import 'presentation/theme/app_theme.dart';
+
+
 void main() async {
   // Garante que o Flutter está pronto antes de iniciar o Firebase
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,9 +58,13 @@ class MeuAppVans extends StatelessWidget {
     // ---------------------------------------
 
     return MaterialApp(
-      title: 'App de Van',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: RegisterPage(viewModel: viewModel),
+
+      title: 'PI Van',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme(),
+      initialRoute: AppRoutes.landing,
+      onGenerateRoute: AppRouter.onGenerateRoute,
+
     );
   }
 }
