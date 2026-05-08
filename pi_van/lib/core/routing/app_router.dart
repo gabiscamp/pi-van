@@ -23,8 +23,8 @@ class AppRouter {
     switch (settings.name) {
       case AppRoutes.login:
         return MaterialPageRoute(builder: (_) => const LoginPage());
-      case AppRoutes.register:
-        return MaterialPageRoute(builder: (_) => const RegisterPage());
+      //case AppRoutes.register:
+       // return MaterialPageRoute(builder: (_) => const RegisterPage());
       case AppRoutes.homeDriver:
         return MaterialPageRoute(builder: (_) => const HomeDriverPage());
       case AppRoutes.homeStudent:
