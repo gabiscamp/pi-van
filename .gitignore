@@ -32,3 +32,5 @@ Thumbs.db
 # Env files
 .env
 .env.*
+
+**/node_modules/

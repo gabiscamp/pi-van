@@ -28,6 +28,7 @@ class AppRouter {
       case AppRoutes.landing:
         return MaterialPageRoute(builder: (_) => const LandingPage());
       case AppRoutes.login:
+
         return MaterialPageRoute(
           builder: (_) => LoginPage(
             nextRoute: settings.arguments as String?,
@@ -35,6 +36,7 @@ class AppRouter {
         );
       case AppRoutes.register:
         return MaterialPageRoute(builder: (_) => const RegisterPage());
+
       case AppRoutes.homeDriver:
         return MaterialPageRoute(builder: (_) => const HomeDriverPage());
       case AppRoutes.homeStudent:

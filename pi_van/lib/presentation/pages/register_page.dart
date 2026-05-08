@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+
 import '../../core/routing/app_router.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_scaffold.dart';
@@ -7,6 +8,7 @@ import '../widgets/app_text_field.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
+
 
   @override
   State<RegisterPage> createState() => _RegisterPageState();
