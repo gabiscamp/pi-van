@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:pi_van/presentation/viewmodels/auth_viewmodel.dart';
 
 import '../../core/routing/app_router.dart';
 import '../widgets/app_button.dart';
@@ -7,14 +7,15 @@ import '../widgets/app_scaffold.dart';
 import '../widgets/app_text_field.dart';
 
 class RegisterPage extends StatefulWidget {
-  const RegisterPage({super.key});
-
-
+  const RegisterPage({super.key, required this.viewModel});
+  final AuthViewModel viewModel;
+ 
   @override
   State<RegisterPage> createState() => _RegisterPageState();
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -79,10 +80,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   });
                 },
                 physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  _buildPage1(),
-                  _buildPage2(),
-                ],
+                children: [_buildPage1(), _buildPage2()],
               ),
             ),
             Padding(
@@ -123,8 +121,9 @@ class _RegisterPageState extends State<RegisterPage> {
                           onPressed: _currentPage == 0
                               ? _nextPage
                               : () {
-                                  Navigator.of(context)
-                                      .pushReplacementNamed(AppRoutes.login);
+                                  Navigator.of(
+                                    context,
+                                  ).pushReplacementNamed(AppRoutes.login);
                                 },
                         ),
                       ),
@@ -275,6 +274,29 @@ class _RegisterPageState extends State<RegisterPage> {
             label: '00000-000',
             keyboardType: TextInputType.number,
             prefixIcon: Icons.location_on_outlined,
+            // --- LÓGICA DO VIACEP ADICIONADA AQUI ---
+            onChanged: (valor) async {
+              // Remove o hífen ou qualquer coisa que não seja número
+              final cepDigitado = valor.replaceAll(RegExp(r'[^0-9]'), '');
+
+              // Quando bater 8 números, faz a busca
+              if (cepDigitado.length == 8) {
+                // Chama a função que criamos no AuthViewModel
+                final endereco = await widget.viewModel.buscarCep(cepDigitado);
+
+                // Se a API encontrar o CEP, preenchemos os outros controllers
+                if (endereco != null) {
+                  _ruaController.text = endereco['logradouro'] ?? '';
+                  _bairroController.text = endereco['bairro'] ?? '';
+                  _cidadeController.text = endereco['localidade'] ?? '';
+                  _ufController.text = endereco['uf'] ?? '';
+
+                  // Opcional: move o cursor automaticamente para o campo de "Número"
+                  FocusScope.of(context).nextFocus();
+                }
+              }
+            },
+            // ----------------------------------------
           ),
           const SizedBox(height: 16),
           const Text(
@@ -282,10 +304,7 @@ class _RegisterPageState extends State<RegisterPage> {
             style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
           ),
           const SizedBox(height: 8),
-          AppTextField(
-            controller: _ruaController,
-            label: 'Nome da rua',
-          ),
+          AppTextField(controller: _ruaController, label: 'Nome da rua'),
           const SizedBox(height: 16),
           Row(
             children: [
@@ -295,8 +314,10 @@ class _RegisterPageState extends State<RegisterPage> {
                   children: [
                     const Text(
                       'Número',
-                      style:
-                          TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     AppTextField(
@@ -314,8 +335,10 @@ class _RegisterPageState extends State<RegisterPage> {
                   children: [
                     const Text(
                       'Bairro',
-                      style:
-                          TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     AppTextField(
@@ -336,8 +359,10 @@ class _RegisterPageState extends State<RegisterPage> {
                   children: [
                     const Text(
                       'Cidade',
-                      style:
-                          TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     AppTextField(
@@ -354,14 +379,13 @@ class _RegisterPageState extends State<RegisterPage> {
                   children: [
                     const Text(
                       'UF',
-                      style:
-                          TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
                     ),
                     const SizedBox(height: 8),
-                    AppTextField(
-                      controller: _ufController,
-                      label: 'SP',
-                    ),
+                    AppTextField(controller: _ufController, label: 'SP'),
                   ],
                 ),
               ),
@@ -395,7 +419,11 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
             borderRadius: BorderRadius.circular(16),
           ),
-          child: const Icon(Icons.directions_bus, color: Colors.white, size: 24),
+          child: const Icon(
+            Icons.directions_bus,
+            color: Colors.white,
+            size: 24,
+          ),
         ),
         const SizedBox(height: 20),
         const Text(

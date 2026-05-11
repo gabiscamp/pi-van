@@ -12,6 +12,9 @@ class AppTextField extends StatefulWidget {
   final String? Function(String?)? validator;
   final int? maxLines;
   final int? minLines;
+  
+  // 1. ADICIONADO AQUI: A variável que vai receber a função
+  final void Function(String)? onChanged; 
 
   const AppTextField({
     super.key,
@@ -26,6 +29,9 @@ class AppTextField extends StatefulWidget {
     this.validator,
     this.maxLines = 1,
     this.minLines,
+    
+    // 2. ADICIONADO AQUI: O parâmetro no construtor
+    this.onChanged, 
   });
 
   @override
@@ -50,6 +56,10 @@ class _AppTextFieldState extends State<AppTextField> {
       maxLines: _obscureText ? 1 : widget.maxLines,
       minLines: widget.minLines,
       validator: widget.validator,
+      
+      // 3. ADICIONADO AQUI: Repassando a função para o TextFormField nativo
+      onChanged: widget.onChanged, 
+      
       decoration: InputDecoration(
         labelText: widget.label,
         hintText: widget.hintText ?? widget.label,

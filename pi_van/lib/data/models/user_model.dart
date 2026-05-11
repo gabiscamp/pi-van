@@ -10,6 +10,13 @@ class UserModel extends User {
     required super.email,
     required super.role,
     super.salaId,
+    required super.logradouro,
+    required super.numero,
+    required super.complemento,
+    required super.bairro,
+    required super.cep,
+    required super.localidade,
+    required super.uf,
   });
 
   // ESTE É O BLOCO QUE DEVE ESTAR FALTANDO OU COM ERRO:
@@ -18,12 +25,18 @@ class UserModel extends User {
       id: json['id'] ?? '',
       name: json['name'] ?? '',
       email: json['email'] ?? '',
-      // Converte a String que vem do banco de volta para o Enum Role
       role: Role.values.firstWhere(
         (e) => e.name == json['role'],
         orElse: () => Role.estudante,
       ),
       salaId: json['salaId'],
+      logradouro: json['logradouro'] ?? '',
+      numero: json['numero'] ?? '',
+      complemento: json['complemento'] ?? '',
+      bairro: json['bairro'] ?? '',
+      cep: json['cep'] ?? '',
+      localidade: json['localidade'] ?? '',
+      uf: json['uf'] ?? '',
     );
   }
 
@@ -32,8 +45,15 @@ class UserModel extends User {
       'id': id,
       'name': name,
       'email': email,
-      'role': role.name, // Salva apenas o nome do enum (ex: "MOTORISTA")
+      'role': role.name,
       'salaId': salaId,
+      'logradouro': logradouro,
+      'numero': numero,
+      'complemento': complemento,
+      'bairro': bairro,
+      'cep': cep,
+      'localidade': localidade,
+      'uf': uf,
     };
   }
 }

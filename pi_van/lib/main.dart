@@ -1,14 +1,15 @@
 // lib/main.dart
+import 'package:firebase_core/firebase_core.dart';
+
 import 'firebase_options.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
+
 import 'package:pi_van/data/datasources/auth_remote_datasource.dart';
 import 'package:pi_van/data/repositories/firebase_auth_repository.dart';
 import 'package:pi_van/domain/usecases/login_usecase.dart';
 import 'package:pi_van/domain/usecases/register_usecase.dart';
-import 'package:pi_van/presentation/pages/register_page.dart';
 import 'package:pi_van/presentation/viewmodels/auth_viewmodel.dart';
 
 
@@ -55,6 +56,7 @@ class MeuAppVans extends StatelessWidget {
       loginUseCase: loginUseCase,
       registerUseCase: registerUseCase,
     );
+    AppRouter.authViewModel = viewModel;
     // ---------------------------------------
 
     return MaterialApp(

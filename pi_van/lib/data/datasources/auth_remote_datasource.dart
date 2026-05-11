@@ -17,6 +17,13 @@ class AuthRemoteDataSource {
     required String email,
     required String password,
     required Role role,
+    required String logradouro,
+    required String numero,
+    required String complemento,
+    required String bairro,
+    required String cep,
+    required String localidade,
+    required String uf,
   }) async {
     try {
       // 1. Cria a conta de autenticação (Email e Senha)
@@ -34,6 +41,13 @@ class AuthRemoteDataSource {
         name: name,
         email: email,
         role: role,
+        logradouro: logradouro,
+        numero: numero,
+        complemento: complemento,
+        bairro: bairro,
+        cep: cep,
+        localidade: localidade,
+        uf: uf,
       );
 
       // 3. Salva os dados extras (Nome e Role) no "Banco de Dados" (Firestore)

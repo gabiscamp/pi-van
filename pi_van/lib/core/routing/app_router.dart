@@ -9,6 +9,7 @@ import '../../presentation/pages/login_page.dart';
 import '../../presentation/pages/register_page.dart';
 import '../../presentation/pages/select_faculdade_page.dart';
 import '../../presentation/pages/splash_page.dart';
+import '../../presentation/viewmodels/auth_viewmodel.dart';
 
 class AppRoutes {
   static const String splash = '/';
@@ -23,6 +24,8 @@ class AppRoutes {
 }
 
 class AppRouter {
+  static late AuthViewModel authViewModel;
+
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
       case AppRoutes.landing:
@@ -35,7 +38,11 @@ class AppRouter {
           ),
         );
       case AppRoutes.register:
-        return MaterialPageRoute(builder: (_) => const RegisterPage());
+        return MaterialPageRoute(
+          builder: (_) => RegisterPage(
+            viewModel: authViewModel,
+          ),
+        );
 
       case AppRoutes.homeDriver:
         return MaterialPageRoute(builder: (_) => const HomeDriverPage());

@@ -19,12 +19,26 @@ class FirebaseAuthRepository implements AuthRepository {
     required String email,
     required String password,
     required Role role,
+    required String logradouro,
+    required String numero,
+    required String complemento,
+    required String bairro,
+    required String cep,
+    required String localidade,
+    required String uf,
   }) {
     return remoteDataSource.registerUser(
       name: name,
       email: email,
       password: password,
       role: role,
+      logradouro: logradouro,
+      numero: numero,
+      complemento: complemento,
+      bairro: bairro,
+      cep: cep,
+      localidade: localidade,
+      uf: uf,
     );
   }
 
