@@ -35,6 +35,7 @@ class AppRouter {
         return MaterialPageRoute(
           builder: (_) => LoginPage(
             nextRoute: settings.arguments as String?,
+            viewModel: authViewModel,
           ),
         );
       case AppRoutes.register:

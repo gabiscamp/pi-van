@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pi_van/presentation/viewmodels/auth_viewmodel.dart';
+import 'package:pi_van/domain/enums/role_enum.dart';
 
 import '../../core/routing/app_router.dart';
 import '../widgets/app_button.dart';
@@ -64,6 +65,75 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
+  Future<void> _cadastrar() async {
+    // Validações básicas
+    if (_nameController.text.isEmpty ||
+        _emailController.text.isEmpty ||
+        _passwordController.text.isEmpty ||
+        _confirmController.text.isEmpty ||
+        _cepController.text.isEmpty ||
+        _ruaController.text.isEmpty ||
+        _numeroController.text.isEmpty ||
+        _bairroController.text.isEmpty ||
+        _cidadeController.text.isEmpty ||
+        _ufController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, preencha todos os campos obrigatórios')),
+      );
+      return;
+    }
+
+    if (_passwordController.text != _confirmController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('As senhas não conferem')),
+      );
+      return;
+    }
+
+    if (_passwordController.text.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('A senha deve ter no mínimo 6 caracteres')),
+      );
+      return;
+    }
+
+    // Chamar o registro no ViewModel
+    try {
+      await widget.viewModel.register(
+        name: _nameController.text,
+        email: _emailController.text,
+        password: _passwordController.text,
+        role: _role == 'motorista' ? Role.motorista : Role.estudante,
+        logradouro: _ruaController.text,
+        numero: _numeroController.text,
+        complemento: _complementoController.text,
+        bairro: _bairroController.text,
+        cep: _cepController.text,
+        localidade: _cidadeController.text,
+        uf: _ufController.text,
+      );
+
+      // Se chegou aqui, o cadastro foi bem-sucedido
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Cadastro realizado com sucesso!')),
+        );
+        // Aguarda um pouco antes de navegar
+        Future.delayed(const Duration(seconds: 1), () {
+          if (mounted) {
+            Navigator.of(context).pushReplacementNamed(AppRoutes.login);
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao cadastrar: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
@@ -120,11 +190,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           label: _currentPage == 0 ? 'Próximo' : 'Cadastrar',
                           onPressed: _currentPage == 0
                               ? _nextPage
-                              : () {
-                                  Navigator.of(
-                                    context,
-                                  ).pushReplacementNamed(AppRoutes.login);
-                                },
+                              : _cadastrar,
                         ),
                       ),
                     ],

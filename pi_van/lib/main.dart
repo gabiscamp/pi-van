@@ -2,11 +2,8 @@
 import 'package:firebase_core/firebase_core.dart';
 
 import 'firebase_options.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import 'package:pi_van/data/datasources/auth_remote_datasource.dart';
 import 'package:pi_van/data/repositories/firebase_auth_repository.dart';
 import 'package:pi_van/domain/usecases/login_usecase.dart';
 import 'package:pi_van/domain/usecases/register_usecase.dart';
@@ -15,6 +12,7 @@ import 'package:pi_van/presentation/viewmodels/auth_viewmodel.dart';
 
 import 'core/routing/app_router.dart';
 import 'presentation/theme/app_theme.dart';
+import 'core/di/service_locator.dart';
 
 
 void main() async {
@@ -25,6 +23,9 @@ void main() async {
 await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Setup service locator
+  ServiceLocator.setup();
   
 
   // Roda o seu app
@@ -36,18 +37,8 @@ class MeuAppVans extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // --- INJEÇÃO DE DEPENDÊNCIA MANUAL ---
-    // Ligamos as peças de fora para dentro (Clean Architecture)
-
-    // --- INJEÇÃO DE DEPENDÊNCIA MANUAL ---
-    final remoteDataSource = AuthRemoteDataSource(
-      firebaseAuth: FirebaseAuth.instance,
-      firestore: FirebaseFirestore.instance,
-    );
-
-    final repository = FirebaseAuthRepository(remoteDataSource);
-
-    // Instancia os dois casos de uso
+    // Get dependencies from service locator
+    final repository = ServiceLocator.getIt<FirebaseAuthRepository>();
     final loginUseCase = LoginUseCase(repository);
     final registerUseCase = RegisterUseCase(repository);
 

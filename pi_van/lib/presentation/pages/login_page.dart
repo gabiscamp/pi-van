@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pi_van/presentation/viewmodels/auth_viewmodel.dart';
 
 import '../../core/routing/app_router.dart';
 import '../widgets/app_button.dart';
@@ -7,8 +8,8 @@ import '../widgets/app_text_field.dart';
 
 class LoginPage extends StatefulWidget {
   final String? nextRoute;
-
-  const LoginPage({super.key, this.nextRoute});
+  final AuthViewModel viewModel;
+  const LoginPage({super.key, this.nextRoute, required this.viewModel});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -62,7 +63,11 @@ class _LoginPageState extends State<LoginPage> {
             ),
             borderRadius: BorderRadius.circular(16),
           ),
-          child: const Icon(Icons.directions_bus, color: Colors.white, size: 24),
+          child: const Icon(
+            Icons.directions_bus,
+            color: Colors.white,
+            size: 24,
+          ),
         ),
         const SizedBox(height: 20),
         const Text(
@@ -155,15 +160,21 @@ class _LoginPageState extends State<LoginPage> {
         const SizedBox(height: 32),
         AppButton(
           label: 'Entrar',
-          onPressed: () {
-            if (widget.nextRoute != null) {
-              Navigator.of(context).pushReplacementNamed(widget.nextRoute!);
-              return;
-            }
-            if (_role == 'motorista') {
-              Navigator.of(context).pushReplacementNamed(AppRoutes.homeDriver);
-            } else {
-              Navigator.of(context).pushReplacementNamed(AppRoutes.joinSala);
+          onPressed: () async {
+            try {
+              await widget.viewModel.login(
+                email: _emailController.text,
+                password: _passwordController.text,
+              );
+
+              final rota = widget.viewModel.redirectRoute;
+              if (rota != null && mounted) {
+                Navigator.of(context).pushReplacementNamed(rota);
+              }
+            } catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Email ou senha incorretos')),
+              );
             }
           },
         ),

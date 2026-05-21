@@ -1,5 +1,4 @@
-import 'package:pi_van/domain/enums/role_enum.dart';
-
+import 'package:pi_van/domain/enums/role_enum.dart' show Role;
 import '../../domain/entities/user.dart';
 
 
