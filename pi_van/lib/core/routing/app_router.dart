@@ -35,7 +35,8 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const CreateSalaPage());
       case AppRoutes.splash:
       default:
-        return MaterialPageRoute(builder: (_) => const SplashPage());
+        return MaterialPageRoute(builder: (_) => const SplashPage()); 
     }
+ 
   }
 }
