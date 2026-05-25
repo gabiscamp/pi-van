@@ -3,8 +3,5 @@ class Validators {
     final emailRegExp = RegExp(r'^[^@]+@[^@]+\.[^@]+');
     return emailRegExp.hasMatch(value.trim());
   }
-
-  static bool hasMinLength(String value, int min) {
-    return value.trim().length >= min;
-  }
+  static bool hasMinLength(String value, int min) => value.trim().length >= min;
 }
