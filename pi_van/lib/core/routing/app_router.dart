@@ -79,7 +79,7 @@ class AppRouter {
       case AppRoutes.routeBuilder:
         return _slide(const RouteBuilderPage());
       case AppRoutes.activeRoute:
-        return _slide(const ActiveRoutePage());
+        return _slide(const ActiveRoutePage(), settings: settings);
 
       case AppRoutes.splash:
       default:
@@ -87,8 +87,9 @@ class AppRouter {
     }
   }
 
-  static PageRouteBuilder _fade(Widget page) {
+  static PageRouteBuilder _fade(Widget page, {RouteSettings? settings}) {
     return PageRouteBuilder(
+      settings: settings,
       pageBuilder: (_, __, ___) => page,
       transitionsBuilder: (_, animation, __, child) =>
           FadeTransition(opacity: animation, child: child),
@@ -96,8 +97,9 @@ class AppRouter {
     );
   }
 
-  static PageRouteBuilder _slide(Widget page) {
+  static PageRouteBuilder _slide(Widget page, {RouteSettings? settings}) {
     return PageRouteBuilder(
+      settings: settings,
       pageBuilder: (_, __, ___) => page,
       transitionsBuilder: (_, animation, __, child) {
         return SlideTransition(

@@ -9,6 +9,7 @@ import 'package:pi_van/domain/usecases/register_usecase.dart';
 import 'package:pi_van/presentation/viewmodels/auth_viewmodel.dart';
 
 import 'core/routing/app_router.dart';
+import 'core/services/notification_service.dart';
 import 'presentation/theme/app_theme.dart';
 import 'core/di/service_locator.dart';
 
@@ -23,6 +24,7 @@ void main() async {
   ));
 
   ServiceLocator.setup();
+  await NotificationService.init();
 
   // Cria o ViewModel UMA VEZ, fora do build
   final authRepository = ServiceLocator.getIt<AuthRepository>();

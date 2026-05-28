@@ -17,37 +17,34 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
         return ios;
-      case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
-      case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
-      case TargetPlatform.linux:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for linux - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
       default:
         throw UnsupportedError(
           'DefaultFirebaseOptions are not supported for this platform.',
         );
     }
   }
+
+  // ─── WEB ────────────────────────────────────────────────────────────────────
+  // ATENÇÃO: Você precisa registrar um app web no Firebase Console:
+  //   1. Acesse console.firebase.google.com → seu projeto → "Adicionar app" → Web
+  //   2. Copie o valor de "appId" (formato: 1:688654083193:web:XXXXXXXXXXXXXXXX)
+  //   3. Cole abaixo no campo appId e salve o arquivo.
+  // Os demais valores já estão corretos para o projeto app-de-van-5f05d.
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyA3EZNhBkJM1NiIqf35z55IWQ7ie1vG7sM',
+    appId: '1:688654083193:web:07e305605b5e95ecade0a8',
+    messagingSenderId: '688654083193',
+    projectId: 'app-de-van-5f05d',
+    authDomain: 'app-de-van-5f05d.firebaseapp.com',
+    storageBucket: 'app-de-van-5f05d.firebasestorage.app',
+  );
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyA3EZNhBkJM1NiIqf35z55IWQ7ie1vG7sM',

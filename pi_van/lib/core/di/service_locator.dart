@@ -8,36 +8,25 @@ import '../../data/repositories/firebase_sala_repository.dart';
 import '../../data/repositories/firebase_auth_repository.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/repositories/sala_repository.dart';
+import '../services/geocoding_service.dart';
+import '../services/route_service.dart';
 
 class ServiceLocator {
   static final GetIt getIt = GetIt.instance;
-
   static void setup() {
-    // Firebase instances
     getIt.registerLazySingleton<FirebaseFirestore>(() => FirebaseFirestore.instance);
     getIt.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
     getIt.registerLazySingleton<Uuid>(() => const Uuid());
+    getIt.registerLazySingleton<GeocodingService>(() => GeocodingService());
+    getIt.registerLazySingleton<RouteService>(() => RouteService());
 
-    // Data sources
-    getIt.registerLazySingleton<AuthRemoteDataSource>(
-      () => AuthRemoteDataSource(
-        firebaseAuth: getIt<FirebaseAuth>(),
-        firestore: getIt<FirebaseFirestore>(),
-      ),
-    );
-    getIt.registerLazySingleton<SalaRemoteDataSource>(
-      () => SalaRemoteDataSourceImpl(
-        firestore: getIt<FirebaseFirestore>(),
-        uuid: getIt<Uuid>(),
-      ),
-    );
-
-    // Repositories - registrar como interface para injeção limpa
-    getIt.registerLazySingleton<AuthRepository>(
-      () => FirebaseAuthRepository(getIt<AuthRemoteDataSource>()),
-    );
-    getIt.registerLazySingleton<SalaRepository>(
-      () => FirebaseSalaRepository(getIt<SalaRemoteDataSource>()),
-    );
+    getIt.registerLazySingleton<AuthRemoteDataSource>(() => AuthRemoteDataSource(
+      firebaseAuth: getIt<FirebaseAuth>(), firestore: getIt<FirebaseFirestore>(),
+    ));
+    getIt.registerLazySingleton<SalaRemoteDataSourceImpl>(() => SalaRemoteDataSourceImpl(
+      firestore: getIt<FirebaseFirestore>(), uuid: getIt<Uuid>(),
+    ));
+    getIt.registerLazySingleton<AuthRepository>(() => FirebaseAuthRepository(getIt<AuthRemoteDataSource>()));
+    getIt.registerLazySingleton<SalaRepository>(() => FirebaseSalaRepository(getIt<SalaRemoteDataSourceImpl>()));
   }
 }

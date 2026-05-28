@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/routing/app_router.dart';
 import '../../theme/app_theme.dart';
-import '../../widgets/app_button.dart';
 import '../../widgets/app_text_field.dart';
 
 class LandingPage extends StatefulWidget {

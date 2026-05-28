@@ -45,9 +45,11 @@ class _CreateSalaPageState extends State<CreateSalaPage> {
         driverName: user.name,
       );
 
-      // Atualiza o salaId no Firestore do user
+      // Atualiza salaId e salaIds no Firestore
       final authRepo = ServiceLocator.getIt<AuthRepository>();
-      final updatedUser = user.copyWith(salaId: sala.id);
+      final newSalaIds = List<String>.from(user.salaIds);
+      if (!newSalaIds.contains(sala.id)) newSalaIds.add(sala.id);
+      final updatedUser = user.copyWith(salaId: sala.id, salaIds: newSalaIds);
       await authRepo.updateUser(updatedUser);
       widget.viewModel.updateCurrentUser(updatedUser);
 

@@ -9,16 +9,15 @@ class ViaCepService {
 
     try {
       final url = Uri.parse('https://viacep.com.br/ws/$cepLimpo/json/');
-      final response = await http.get(url);
+      final response = await http.get(url).timeout(const Duration(seconds: 6));
 
-      if (response.statusCode != 200) return null; // ← mais explícito
+      if (response.statusCode != 200) return null;
 
       final data = json.decode(response.body) as Map<String, dynamic>;
       if (data.containsKey('erro')) return null;
 
       return data;
-    } catch (e) {
-      print('Erro ViaCEP: $e'); // remova depois de resolver
+    } catch (_) {
       return null;
     }
   }

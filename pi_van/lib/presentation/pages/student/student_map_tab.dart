@@ -1,117 +1,182 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../theme/app_theme.dart';
+import '../../../core/di/service_locator.dart';
+import '../../../core/services/notification_service.dart';
+import '../../../core/services/route_service.dart' show RouteService;
+import '../../../domain/repositories/sala_repository.dart';
 
-class StudentMapTab extends StatelessWidget {
+class StudentMapTab extends StatefulWidget {
   final AuthViewModel viewModel;
   const StudentMapTab({super.key, required this.viewModel});
+  @override
+  State<StudentMapTab> createState() => _StudentMapTabState();
+}
+
+class _StudentMapTabState extends State<StudentMapTab> {
+  final MapController _mapController = MapController();
+  StreamSubscription? _locationSub;
+
+  LatLng? _driverPosition;
+  bool _driverOnline = false;
+
+  // Centro padrão em BH
+  static const _defaultCenter = LatLng(-19.9167, -43.9345);
+
+  @override
+  void initState() {
+    super.initState();
+    _listenDriverLocation();
+  }
+
+  @override
+  void dispose() {
+    _locationSub?.cancel();
+    super.dispose();
+  }
+
+  void _listenDriverLocation() {
+    final user = widget.viewModel.currentUser;
+    if (user?.salaId == null) return;
+
+    final repo = ServiceLocator.getIt<SalaRepository>();
+    _locationSub = repo.driverLocationStream(user!.salaId!).listen((data) {
+      if (!mounted) return;
+      if (data != null && data['isSharing'] == true) {
+        final lat = (data['latitude'] as num?)?.toDouble();
+        final lng = (data['longitude'] as num?)?.toDouble();
+        if (lat != null && lng != null) {
+          setState(() {
+            _driverPosition = LatLng(lat, lng);
+            _driverOnline = true;
+          });
+          _mapController.move(_driverPosition!, _mapController.camera.zoom);
+          _checkProximity(lat, lng);
+        }
+      } else {
+        setState(() => _driverOnline = false);
+        NotificationService.resetDriverApproaching();
+      }
+    });
+  }
+
+  void _checkProximity(double driverLat, double driverLng) {
+    final user = widget.viewModel.currentUser;
+    if (user?.latitude == null || user?.longitude == null) return;
+    final dist = RouteService.haversineDistance(driverLat, driverLng, user!.latitude!, user.longitude!);
+    if (dist < 500) {
+      NotificationService.showDriverApproaching();
+    } else {
+      NotificationService.resetDriverApproaching();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Top bar
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              color: AppTheme.white,
-              child: Row(
-                children: [
-                  Container(
+      body: Stack(
+        children: [
+          // Mapa OSM
+          FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(
+              initialCenter: _driverPosition ?? _defaultCenter,
+              initialZoom: 14,
+            ),
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.vango.app',
+              ),
+              // Marcador do motorista
+              if (_driverPosition != null && _driverOnline)
+                MarkerLayer(markers: [
+                  Marker(
+                    point: _driverPosition!,
+                    width: 50, height: 50,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary,
+                        shape: BoxShape.circle,
+                        boxShadow: [BoxShadow(color: AppTheme.primary.withOpacity(0.4), blurRadius: 12, spreadRadius: 2)],
+                      ),
+                      child: const Icon(Icons.directions_bus_rounded, color: Colors.white, size: 28),
+                    ),
+                  ),
+                ]),
+              // Marcador do aluno (se tiver lat/lng)
+              if (widget.viewModel.currentUser?.latitude != null && widget.viewModel.currentUser?.longitude != null)
+                MarkerLayer(markers: [
+                  Marker(
+                    point: LatLng(widget.viewModel.currentUser!.latitude!, widget.viewModel.currentUser!.longitude!),
                     width: 40, height: 40,
+                    child: Container(
+                      decoration: BoxDecoration(color: AppTheme.accent, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 3)),
+                      child: const Icon(Icons.person, color: Colors.white, size: 20),
+                    ),
+                  ),
+                ]),
+            ],
+          ),
+
+          // Top bar
+          Positioned(
+            top: 0, left: 0, right: 0,
+            child: SafeArea(
+              child: Container(
+                margin: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(color: AppTheme.white, borderRadius: AppTheme.radiusMd, boxShadow: AppTheme.cardShadow),
+                child: Row(children: [
+                  Container(
+                    width: 36, height: 36,
                     decoration: BoxDecoration(gradient: AppTheme.primaryGradient, borderRadius: AppTheme.radiusMd),
-                    child: const Icon(Icons.map_rounded, color: Colors.white, size: 20),
+                    child: const Icon(Icons.map_rounded, color: Colors.white, size: 18),
                   ),
                   const SizedBox(width: 12),
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Localização da Van', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-                      Text('Acompanhe em tempo real', style: TextStyle(color: AppTheme.grey500, fontSize: 12)),
-                    ],
-                  ),
-                ],
+                  const Text('Localização da Van', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                ]),
               ),
             ),
-            // Map area
-            Expanded(
-              child: Stack(
-                children: [
-                  // Placeholder para o flutter_map
-                  Container(
-                    width: double.infinity,
-                    color: AppTheme.grey100,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 80, height: 80,
-                          decoration: BoxDecoration(color: AppTheme.primaryLight, borderRadius: BorderRadius.circular(24)),
-                          child: const Icon(Icons.map_outlined, color: AppTheme.primary, size: 40),
-                        ),
-                        const SizedBox(height: 20),
-                        const Text('Mapa em tempo real', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
-                        const SizedBox(height: 8),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 48),
-                          child: Text(
-                            'Aqui você verá a localização da van quando o motorista iniciar uma rota.\n\nIntegre com flutter_map + OpenStreetMap.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: AppTheme.grey500, fontSize: 14, height: 1.5),
-                          ),
-                        ),
-                      ],
-                    ),
+          ),
+
+          // Bottom info card
+          Positioned(
+            bottom: 0, left: 0, right: 0,
+            child: Container(
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(color: AppTheme.white, borderRadius: AppTheme.radiusXl, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 4))]),
+              child: Row(children: [
+                Container(
+                  width: 48, height: 48,
+                  decoration: BoxDecoration(
+                    color: _driverOnline ? AppTheme.primaryLight : AppTheme.grey100,
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  // Bottom info card
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    child: Container(
-                      margin: const EdgeInsets.all(16),
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: AppTheme.white,
-                        borderRadius: AppTheme.radiusXl,
-                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 4))],
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 48, height: 48,
-                            decoration: BoxDecoration(
-                              color: AppTheme.grey100,
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: const Icon(Icons.directions_bus_rounded, color: AppTheme.grey400, size: 24),
-                          ),
-                          const SizedBox(width: 14),
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Motorista offline', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-                                SizedBox(height: 2),
-                                Text('Aguardando início da rota', style: TextStyle(color: AppTheme.grey500, fontSize: 13)),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            width: 10, height: 10,
-                            decoration: BoxDecoration(color: AppTheme.grey300, shape: BoxShape.circle),
-                          ),
-                        ],
-                      ),
-                    ),
+                  child: Icon(Icons.directions_bus_rounded, color: _driverOnline ? AppTheme.primary : AppTheme.grey400, size: 24),
+                ),
+                const SizedBox(width: 14),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(_driverOnline ? 'Motorista em rota' : 'Motorista offline', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                  const SizedBox(height: 2),
+                  Text(
+                    _driverOnline ? 'Localização atualizada em tempo real' : 'Aguardando início da rota',
+                    style: const TextStyle(color: AppTheme.grey500, fontSize: 13),
                   ),
-                ],
-              ),
+                ])),
+                Container(
+                  width: 12, height: 12,
+                  decoration: BoxDecoration(color: _driverOnline ? AppTheme.success : AppTheme.grey300, shape: BoxShape.circle),
+                ),
+              ]),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
