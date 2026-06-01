@@ -79,13 +79,13 @@ class _DriverProfileTabState extends State<DriverProfileTab> {
                   width: double.infinity, padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(gradient: AppTheme.primaryGradient, borderRadius: AppTheme.radiusXl, boxShadow: AppTheme.elevatedShadow),
                   child: Column(children: [
-                    Text('Sala Ativa', style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 13)),
+                    Text('Sala Ativa', style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 13)),
                     const SizedBox(height: 4),
-                    Text(active.name, style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 15, fontWeight: FontWeight.w600)),
+                    Text(active.name, style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 15, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
                     Text(active.accessCode, style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w800, letterSpacing: 8)),
                     const SizedBox(height: 12),
-                    Container(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8), decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: AppTheme.radiusFull),
+                    Container(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: AppTheme.radiusFull),
                       child: const Row(mainAxisSize: MainAxisSize.min, children: [
                         Icon(Icons.copy_rounded, color: Colors.white, size: 16), SizedBox(width: 8),
                         Text('Copiar código', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13)),
@@ -127,7 +127,7 @@ class _DriverProfileTabState extends State<DriverProfileTab> {
                           const SizedBox(width: 12),
                           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                             Text(sala.name, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: isActive ? AppTheme.primary : AppTheme.grey900)),
-                            Text('Código: ${sala.accessCode}', style: TextStyle(color: isActive ? AppTheme.primary.withOpacity(0.7) : AppTheme.grey500, fontSize: 12)),
+                            Text('Código: ${sala.accessCode}', style: TextStyle(color: isActive ? AppTheme.primary.withValues(alpha: 0.7) : AppTheme.grey500, fontSize: 12)),
                           ])),
                           if (isActive) const Icon(Icons.check_circle_rounded, color: AppTheme.primary, size: 20),
                         ]),
@@ -141,6 +141,8 @@ class _DriverProfileTabState extends State<DriverProfileTab> {
 
             // Menu
             _menuItem(Icons.location_on_outlined, 'Endereço', user.enderecoCompleto),
+            const SizedBox(height: 12),
+            _menuItem(Icons.meeting_room_outlined, 'Minhas Salas', 'Criar, editar e excluir salas', onTap: () => Navigator.of(context).pushNamed(AppRoutes.manageSalas).then((_) async { await widget.viewModel.reloadUser(); _loadSalas(); })),
             const SizedBox(height: 12),
             _menuItem(Icons.school_outlined, 'Faculdades', 'Gerenciar faculdades da sala', onTap: () => Navigator.of(context).pushNamed(AppRoutes.manageFaculdades).then((_) => _loadSalas())),
             const SizedBox(height: 12),

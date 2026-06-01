@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "688654083193",
+    "project_id": "app-de-van-5f05d",
+    "storage_bucket": "app-de-van-5f05d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:688654083193:android:ee6d2c056025c909ade0a8",
+        "android_client_info": {
+          "package_name": "com.example.pi_van"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "688654083193-ocm6mb21uelt501ngoln1c26vlce5tt5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.pi_van",
+            "certificate_hash": "e130de72b4eb66f72cbe47cf9fb422aadd386d4a"
+          }
+        },
+        {
+          "client_id": "688654083193-q5ignb0i7sd1qjn1bs4a8fs590ch51vb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA3EZNhBkJM1NiIqf35z55IWQ7ie1vG7sM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "688654083193-q5ignb0i7sd1qjn1bs4a8fs590ch51vb.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "688654083193-to4t960ap0o2ekm9i6uj7ocs23gmr0q2.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.piVan"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

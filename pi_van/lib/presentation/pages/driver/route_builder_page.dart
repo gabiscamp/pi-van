@@ -1,11 +1,15 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../theme/app_theme.dart';
 import '../../../core/di/service_locator.dart';
 import '../../../core/routing/app_router.dart';
+import '../../../core/routing/active_route_args.dart';
 import '../../../core/services/route_service.dart';
+import '../../../domain/entities/attendance.dart';
+import '../../../domain/entities/route_stop_entity.dart';
+import '../../../domain/enums/attendance_status.dart';
+import '../../../domain/enums/route_type.dart';
 import '../../../domain/repositories/sala_repository.dart';
+import '../../../domain/usecases/route_builder_service.dart';
 
 class RouteBuilderPage extends StatefulWidget {
   const RouteBuilderPage({super.key});
@@ -14,7 +18,8 @@ class RouteBuilderPage extends StatefulWidget {
 }
 
 class _RouteBuilderPageState extends State<RouteBuilderPage> {
-  List<RouteStop> _stops = [];
+  RouteType _type = RouteType.ida;
+  List<RouteStopEntity> _stops = [];
   bool _loading = true;
   bool _optimizing = false;
   String? _routeInfo;
@@ -26,67 +31,61 @@ class _RouteBuilderPageState extends State<RouteBuilderPage> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    _loadStops();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is RouteType && args != _type) {
+      _type = args;
+    }
+    if (_loading) _loadStops();
   }
 
   Future<void> _loadStops() async {
-    if (_salaId.isEmpty) { setState(() => _loading = false); return; }
+    if (_salaId.isEmpty) {
+      setState(() => _loading = false);
+      return;
+    }
+    setState(() { _loading = true; _routeInfo = null; });
     try {
       final repo = ServiceLocator.getIt<SalaRepository>();
-      final fs = FirebaseFirestore.instance;
+      final builder = ServiceLocator.getIt<RouteBuilderService>();
 
-      // Carregar faculdades da sala
       final faculdades = await repo.getFaculdades(_salaId);
+      final votes = await repo.getAttendance(salaId: _salaId, date: _today);
 
-      // Carregar votos de hoje para saber quem vai
-      final votesSnap = await fs.collection('salas').doc(_salaId).collection('attendance').doc(_today).collection('votes').get();
-      final votes = <String, Map<String, dynamic>>{};
-      for (final doc in votesSnap.docs) { votes[doc.id] = doc.data(); }
+      // Converte votos do dia em inputs para o builder.
+      final inputs = <RoutePassengerInput>[];
+      votes.forEach((userId, raw) {
+        final data = (raw as Map).cast<String, dynamic>();
+        final statusStr = data['status'] as String?;
+        if (statusStr == null) return;
+        final status = AttendanceStatus.values.firstWhere(
+          (e) => e.name == statusStr, orElse: () => AttendanceStatus.pendente,
+        );
+        if (status == AttendanceStatus.pendente || status == AttendanceStatus.naoVai) return;
 
-      // Carregar dados dos alunos que vão na ida (vaiEVolta ou soIda)
-      final stops = <RouteStop>[];
-      for (final entry in votes.entries) {
-        final status = entry.value['status'] as String?;
-        if (status != 'vaiEVolta' && status != 'soIda') continue;
-
-        // Buscar dados do usuário para lat/lng
-        final userDoc = await fs.collection('users').doc(entry.key).get();
-        if (!userDoc.exists) continue;
-        final userData = userDoc.data()!;
-        final lat = (userData['latitude'] as num?)?.toDouble();
-        final lng = (userData['longitude'] as num?)?.toDouble();
-        if (lat == null || lng == null || lat == 0) continue;
-
-        stops.add(RouteStop(
-          id: entry.key,
-          name: userData['name'] ?? 'Aluno',
-          address: '${userData['logradouro'] ?? ''}, ${userData['numero'] ?? ''}',
-          lat: lat, lng: lng,
-          isFaculdade: false,
+        inputs.add(RoutePassengerInput(
+          userId: userId,
+          name: data['userName'] as String? ?? 'Aluno',
+          status: status,
+          faculdadeId: data['faculdadeId'] as String?,
+          faculdadeName: data['faculdadeName'] as String?,
+          boarding: AddressRef.fromMap((data['boarding'] as Map?)?.cast<String, dynamic>()),
+          dropoff: AddressRef.fromMap((data['dropoff'] as Map?)?.cast<String, dynamic>()),
         ));
-      }
+      });
 
-      // Adicionar faculdades como destinos
-      for (final fac in faculdades) {
-        if (fac.latitude == 0 && fac.longitude == 0) continue;
-        stops.add(RouteStop(
-          id: 'fac_${fac.id}',
-          name: '🎓 ${fac.name}',
-          address: fac.address,
-          lat: fac.latitude, lng: fac.longitude,
-          isFaculdade: true,
-        ));
-      }
+      final stops = builder.buildStops(type: _type, passengers: inputs, faculdades: faculdades);
 
       if (mounted) setState(() { _stops = stops; _loading = false; });
     } catch (e) {
       if (mounted) setState(() => _loading = false);
-      print('Error loading stops: $e');
+      debugPrint('Error loading stops: $e');
     }
   }
 
+  /// Otimiza apenas dentro de cada fase (embarques / faculdades para ida;
+  /// faculdades / desembarques para volta), preservando a prioridade da rota.
   Future<void> _optimizeRoute() async {
     if (_stops.length < 3) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -96,65 +95,82 @@ class _RouteBuilderPageState extends State<RouteBuilderPage> {
     }
 
     setState(() { _optimizing = true; _routeInfo = null; });
-
     try {
       final routeService = ServiceLocator.getIt<RouteService>();
-      final waypoints = _stops.map((s) => LatLng(lat: s.lat, lng: s.lng)).toList();
-      final result = await routeService.optimizeRoute(waypoints, sourceIndex: 0);
 
-      if (result != null && mounted) {
-        // Reordenar stops pela ordem otimizada
-        final optimized = <RouteStop>[];
-        for (final idx in result.optimizedOrder) {
-          if (idx < _stops.length) optimized.add(_stops[idx]);
-        }
+      // Divide em duas fases pela ordem natural construída pelo builder.
+      // Ida:   [pickups...] + [faculdades...]
+      // Volta: [faculdades...] + [dropoffs...]
+      final firstPhase = _stops.where((s) =>
+          _type == RouteType.ida ? !s.isFaculdade : s.isFaculdade).toList();
+      final secondPhase = _stops.where((s) =>
+          _type == RouteType.ida ? s.isFaculdade : !s.isFaculdade).toList();
 
-        final confirm = await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusLg),
-            title: const Text('Rota otimizada!'),
-            content: Text('Distância: ${result.distanceText}\nTempo estimado: ${result.durationText}\n\nDeseja aceitar a rota otimizada?'),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Manter original')),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.success, foregroundColor: Colors.white),
-                child: const Text('Aceitar'),
-              ),
-            ],
-          ),
-        );
+      final optimizedFirst = await _optimizePhase(routeService, firstPhase);
+      final optimizedSecond = await _optimizePhase(routeService, secondPhase);
+      final optimized = [...optimizedFirst, ...optimizedSecond];
 
-        if (confirm == true) {
-          setState(() {
-            _stops = optimized;
-            _routeInfo = '${result.distanceText} • ${result.durationText}';
-          });
-        } else {
-          // Calcular rota na ordem atual pra mostrar info
-          final currentRoute = await routeService.getRoute(waypoints);
-          if (currentRoute != null && mounted) {
-            setState(() => _routeInfo = '${currentRoute.distanceText} • ${currentRoute.durationText}');
-          }
-        }
-      } else {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Erro ao otimizar. Verifique se todos os endereços têm coordenadas.'), backgroundColor: AppTheme.error, behavior: SnackBarBehavior.floating),
-        );
+      // Calcula info total da rota otimizada.
+      final waypoints = optimized.map((s) => LatLng(lat: s.latitude, lng: s.longitude)).toList();
+      final route = await routeService.getRoute(waypoints);
+
+      if (!mounted) return;
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusLg),
+          title: const Text('Rota otimizada!'),
+          content: Text(route != null
+              ? 'Distância: ${route.distanceText}\nTempo estimado: ${route.durationText}\n\nDeseja aplicar a ordem otimizada?'
+              : 'Ordem das paradas otimizada dentro de cada fase. Deseja aplicar?'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Manter')),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.success, foregroundColor: Colors.white),
+              child: const Text('Aplicar'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirm == true) {
+        setState(() {
+          _stops = optimized;
+          if (route != null) _routeInfo = '${route.distanceText} • ${route.durationText}';
+        });
+      } else if (route != null) {
+        setState(() => _routeInfo = '${route.distanceText} • ${route.durationText}');
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro: $e'), backgroundColor: AppTheme.error, behavior: SnackBarBehavior.floating),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao otimizar: $e'), backgroundColor: AppTheme.error, behavior: SnackBarBehavior.floating),
+        );
+      }
     } finally {
       if (mounted) setState(() => _optimizing = false);
     }
   }
 
+  Future<List<RouteStopEntity>> _optimizePhase(RouteService service, List<RouteStopEntity> phase) async {
+    if (phase.length < 3) return phase; // TSP exige 3+ pontos
+    final waypoints = phase.map((s) => LatLng(lat: s.latitude, lng: s.longitude)).toList();
+    final result = await service.optimizeRoute(waypoints, sourceIndex: 0);
+    if (result == null) return phase;
+    final reordered = <RouteStopEntity>[];
+    for (final idx in result.optimizedOrder) {
+      if (idx < phase.length) reordered.add(phase[idx]);
+    }
+    return reordered.length == phase.length ? reordered : phase;
+  }
+
   void _startRoute() {
     if (_stops.isEmpty) return;
-    Navigator.of(context).pushNamed(AppRoutes.activeRoute, arguments: _stops);
+    Navigator.of(context).pushNamed(
+      AppRoutes.activeRoute,
+      arguments: ActiveRouteArgs(type: _type, stops: _stops),
+    );
   }
 
   @override
@@ -162,7 +178,7 @@ class _RouteBuilderPageState extends State<RouteBuilderPage> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Montar Rota'),
+        title: Text('Montar ${_type.label}'),
         backgroundColor: AppTheme.white, surfaceTintColor: Colors.transparent,
         actions: [
           if (_stops.isNotEmpty)
@@ -180,29 +196,60 @@ class _RouteBuilderPageState extends State<RouteBuilderPage> {
             ),
         ],
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _stops.isEmpty ? _buildEmptyState() : _buildRouteList(),
+      body: Column(children: [
+        _buildTypeSwitch(),
+        Expanded(child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : _stops.isEmpty ? _buildEmptyState() : _buildRouteList()),
+      ]),
       bottomNavigationBar: _stops.isNotEmpty ? _buildBottomBar(context) : null,
     );
   }
 
+  Widget _buildTypeSwitch() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(color: AppTheme.grey100, borderRadius: AppTheme.radiusMd),
+      child: Row(children: RouteType.values.map((t) {
+        final selected = _type == t;
+        return Expanded(child: GestureDetector(
+          onTap: () { if (!selected) { setState(() { _type = t; _loading = true; }); _loadStops(); } },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(color: selected ? AppTheme.white : Colors.transparent, borderRadius: AppTheme.radiusMd,
+              boxShadow: selected ? AppTheme.cardShadow : null),
+            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              Icon(t == RouteType.ida ? Icons.arrow_forward_rounded : Icons.arrow_back_rounded,
+                size: 16, color: selected ? AppTheme.primary : AppTheme.grey500),
+              const SizedBox(width: 6),
+              Text(t.shortLabel, style: TextStyle(color: selected ? AppTheme.primary : AppTheme.grey500, fontWeight: FontWeight.w700, fontSize: 13)),
+            ]),
+          ),
+        ));
+      }).toList()),
+    );
+  }
+
   Widget _buildEmptyState() {
+    final hint = _type == RouteType.ida
+        ? 'Nenhum aluno marcou ida hoje (com endereço de embarque e coordenadas).'
+        : 'Nenhum aluno marcou volta hoje (com endereço de desembarque e coordenadas).';
     return Center(child: Padding(padding: const EdgeInsets.all(40), child: Column(mainAxisSize: MainAxisSize.min, children: [
       Container(width: 80, height: 80, decoration: BoxDecoration(color: AppTheme.primaryLight, borderRadius: BorderRadius.circular(24)),
         child: const Icon(Icons.alt_route_rounded, color: AppTheme.primary, size: 40)),
       const SizedBox(height: 20),
       const Text('Nenhuma parada', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
       const SizedBox(height: 8),
-      const Text('Os alunos precisam marcar presença e ter endereço com coordenadas para aparecer aqui.',
-        textAlign: TextAlign.center, style: TextStyle(color: AppTheme.grey500, fontSize: 14, height: 1.5)),
+      Text(hint, textAlign: TextAlign.center, style: const TextStyle(color: AppTheme.grey500, fontSize: 14, height: 1.5)),
     ])));
   }
 
   Widget _buildRouteList() {
     return Column(children: [
       if (_routeInfo != null) Container(
-        margin: const EdgeInsets.fromLTRB(20, 16, 20, 0), padding: const EdgeInsets.all(14),
+        margin: const EdgeInsets.fromLTRB(20, 12, 20, 0), padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(color: AppTheme.successLight, borderRadius: AppTheme.radiusMd),
         child: Row(children: [
           const Icon(Icons.route_rounded, color: AppTheme.success, size: 18), const SizedBox(width: 10),
@@ -214,7 +261,11 @@ class _RouteBuilderPageState extends State<RouteBuilderPage> {
         decoration: BoxDecoration(color: AppTheme.infoLight, borderRadius: AppTheme.radiusMd),
         child: Row(children: [
           const Icon(Icons.info_outline_rounded, color: AppTheme.info, size: 18), const SizedBox(width: 10),
-          const Expanded(child: Text('Arraste para reordenar. "Otimizar" calcula o melhor percurso.', style: TextStyle(color: AppTheme.info, fontSize: 12))),
+          Expanded(child: Text(
+            _type == RouteType.ida
+                ? 'Primeiro busca os alunos, depois entrega nas faculdades. Arraste para reordenar.'
+                : 'Primeiro passa nas faculdades, depois leva os alunos para casa. Arraste para reordenar.',
+            style: const TextStyle(color: AppTheme.info, fontSize: 12))),
         ]),
       ),
       Expanded(child: ReorderableListView.builder(
@@ -229,9 +280,11 @@ class _RouteBuilderPageState extends State<RouteBuilderPage> {
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               leading: Container(width: 36, height: 36,
                 decoration: BoxDecoration(gradient: stop.isFaculdade ? AppTheme.successGradient : AppTheme.primaryGradient, borderRadius: BorderRadius.circular(10)),
-                child: Center(child: Text('${i + 1}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)))),
-              title: Text(stop.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-              subtitle: Text(stop.address, style: const TextStyle(color: AppTheme.grey500, fontSize: 12)),
+                child: Center(child: stop.isFaculdade
+                  ? const Icon(Icons.school_rounded, color: Colors.white, size: 18)
+                  : Text('${i + 1}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)))),
+              title: Text(_titleFor(stop), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+              subtitle: Text(_subtitleFor(stop), style: const TextStyle(color: AppTheme.grey500, fontSize: 12)),
               trailing: ReorderableDragStartListener(index: i, child: Container(width: 36, height: 36,
                 decoration: BoxDecoration(color: AppTheme.grey100, borderRadius: AppTheme.radiusMd),
                 child: const Icon(Icons.drag_handle_rounded, color: AppTheme.grey400, size: 20))),
@@ -242,32 +295,42 @@ class _RouteBuilderPageState extends State<RouteBuilderPage> {
     ]);
   }
 
+  String _titleFor(RouteStopEntity stop) {
+    if (stop.isFaculdade) return '🎓 ${stop.name}';
+    final verb = stop.isPickup ? 'Buscar' : 'Deixar';
+    return '$verb ${stop.name}';
+  }
+
+  String _subtitleFor(RouteStopEntity stop) {
+    if (stop.isFaculdade) {
+      final n = stop.passengers.length;
+      return '$n aluno${n == 1 ? '' : 's'} • ${stop.address}';
+    }
+    final parts = <String>[
+      if (stop.addressLabel != null) stop.addressLabel!,
+      if (stop.address.isNotEmpty) stop.address,
+    ];
+    final base = parts.join(' · ');
+    return stop.faculdadeName != null && stop.faculdadeName!.isNotEmpty ? '$base → ${stop.faculdadeName}' : base;
+  }
+
   Widget _buildBottomBar(BuildContext context) {
+    final alunos = _stops.fold<int>(0, (sum, s) => sum + s.passengerCount);
     return Container(
       padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).padding.bottom + 16),
-      decoration: BoxDecoration(color: AppTheme.white, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 20, offset: const Offset(0, -4))]),
+      decoration: BoxDecoration(color: AppTheme.white, boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 20, offset: const Offset(0, -4))]),
       child: Row(children: [
         Expanded(child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('${_stops.length} paradas', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+          Text('${_stops.length} paradas • $alunos alunos', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
           Text(_routeInfo ?? 'Otimize para ver distância', style: const TextStyle(color: AppTheme.grey500, fontSize: 12)),
         ])),
         ElevatedButton.icon(
           onPressed: _startRoute,
-          icon: const Icon(Icons.navigation_rounded, size: 20), label: const Text('Iniciar Rota'),
+          icon: const Icon(Icons.navigation_rounded, size: 20), label: const Text('Iniciar'),
           style: ElevatedButton.styleFrom(backgroundColor: AppTheme.success, foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14), shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusMd), elevation: 0),
         ),
       ]),
     );
   }
-}
-
-class RouteStop {
-  final String id;
-  final String name;
-  final String address;
-  final double lat;
-  final double lng;
-  final bool isFaculdade;
-  RouteStop({required this.id, required this.name, required this.address, this.lat = 0, this.lng = 0, this.isFaculdade = false});
 }

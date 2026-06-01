@@ -54,8 +54,10 @@ class _LoginPageState extends State<LoginPage> {
     if (email != null && email.isNotEmpty) {
       try {
         await widget.viewModel.sendPasswordReset(email);
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Email de redefinição enviado! Verifique sua caixa de entrada.'), backgroundColor: AppTheme.success, behavior: SnackBarBehavior.floating));
+        }
       } catch (e) {
         if (mounted) _showError('Erro ao enviar email. Verifique o endereço.');
       }

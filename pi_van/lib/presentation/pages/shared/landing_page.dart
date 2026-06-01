@@ -81,7 +81,7 @@ class _LandingPageState extends State<LandingPage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: AppTheme.radiusFull,
             ),
             child: const Text(
@@ -97,7 +97,7 @@ class _LandingPageState extends State<LandingPage> {
           const SizedBox(height: 12),
           Text(
             'Chamada diária, rotas otimizadas e localização em tempo real.',
-            style: TextStyle(fontSize: 14, height: 1.5, color: Colors.white.withOpacity(0.85)),
+            style: TextStyle(fontSize: 14, height: 1.5, color: Colors.white.withValues(alpha: 0.85)),
           ),
         ],
       ),
@@ -202,7 +202,7 @@ class _LandingPageState extends State<LandingPage> {
           Container(
             width: 52, height: 52,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(16),
             ),
             child: const Icon(Icons.directions_bus_filled_rounded, color: Colors.white, size: 28),
@@ -213,7 +213,7 @@ class _LandingPageState extends State<LandingPage> {
           Text(
             'Cadastre-se e gerencie seus alunos, chamadas e rotas.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 14),
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 14),
           ),
           const SizedBox(height: 20),
           SizedBox(
@@ -257,7 +257,7 @@ class _FeatureCard extends StatelessWidget {
         children: [
           Container(
             width: 40, height: 40,
-            decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: AppTheme.radiusMd),
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: AppTheme.radiusMd),
             child: Icon(icon, color: color, size: 20),
           ),
           const SizedBox(height: 12),

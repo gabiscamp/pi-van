@@ -61,8 +61,9 @@ class _DriverDashboardTabState extends State<DriverDashboardTab> {
 
       votes.forEach((userId, data) {
         final status = data['status'] as String?;
-        if (status == 'vaiEVolta' || status == 'soIda' || status == 'soVolta') confirmed++;
-        else if (status == null || status == 'pendente') pending++;
+        if (status == 'vaiEVolta' || status == 'soIda' || status == 'soVolta') {
+          confirmed++;
+        } else if (status == null || status == 'pendente') pending++;
         if (data['liberado'] == true) {
           released++;
           final nome = data['userName'] as String? ?? 'Aluno';
@@ -122,7 +123,7 @@ class _DriverDashboardTabState extends State<DriverDashboardTab> {
             Row(children: [
               Expanded(child: _quickAction('Montar Rota', Icons.alt_route_rounded, AppTheme.success, () => Navigator.of(context).pushNamed(AppRoutes.routeBuilder))),
               const SizedBox(width: 12),
-              Expanded(child: _quickAction('Iniciar Rota', Icons.navigation_rounded, AppTheme.primary, () => Navigator.of(context).pushNamed(AppRoutes.activeRoute))),
+              Expanded(child: _quickAction('Salas', Icons.meeting_room_rounded, AppTheme.primary, () => Navigator.of(context).pushNamed(AppRoutes.manageSalas))),
             ]),
             const SizedBox(height: 28),
             // Liberações recentes
@@ -164,15 +165,15 @@ class _DriverDashboardTabState extends State<DriverDashboardTab> {
       decoration: BoxDecoration(gradient: AppTheme.heroGradient, borderRadius: AppTheme.radiusXl, boxShadow: AppTheme.elevatedShadow),
       child: Row(children: [
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(greeting, style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 14)),
+          Text(greeting, style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 14)),
           const SizedBox(height: 4),
           Text(nome, style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
           const SizedBox(height: 12),
-          Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: AppTheme.radiusFull),
+          Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: AppTheme.radiusFull),
             child: Text(_totalStudents > 0 ? '$_confirmedToday/$_totalStudents confirmados' : 'Nenhum aluno cadastrado',
               style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600))),
         ])),
-        Container(width: 60, height: 60, decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(20)),
+        Container(width: 60, height: 60, decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(20)),
           child: const Icon(Icons.directions_bus_filled_rounded, color: Colors.white, size: 32)),
       ]),
     );
@@ -183,7 +184,7 @@ class _DriverDashboardTabState extends State<DriverDashboardTab> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(color: AppTheme.white, borderRadius: AppTheme.radiusLg, boxShadow: AppTheme.cardShadow),
       child: Row(children: [
-        Container(width: 44, height: 44, decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: AppTheme.radiusMd), child: Icon(icon, color: color, size: 22)),
+        Container(width: 44, height: 44, decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: AppTheme.radiusMd), child: Icon(icon, color: color, size: 22)),
         const SizedBox(width: 12),
         Expanded(child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14))),
         Icon(Icons.chevron_right_rounded, color: AppTheme.grey300, size: 20),

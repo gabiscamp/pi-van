@@ -36,7 +36,7 @@ class ProfilePage extends StatelessWidget {
                   Container(
                     width: 72, height: 72,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(22),
                     ),
                     child: Center(
@@ -49,11 +49,11 @@ class ProfilePage extends StatelessWidget {
                   const SizedBox(height: 16),
                   Text(user.name, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 4),
-                  Text(user.email, style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 14)),
+                  Text(user.email, style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 14)),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: AppTheme.radiusFull),
+                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: AppTheme.radiusFull),
                     child: Text(
                       user.role.name == 'motorista' ? '🚐 Motorista' : '🎓 Estudante',
                       style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),

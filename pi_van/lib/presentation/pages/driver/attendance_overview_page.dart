@@ -65,10 +65,10 @@ class _AttendanceOverviewPageState extends State<AttendanceOverviewPage> with Si
           width: double.infinity, margin: const EdgeInsets.all(20), padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(gradient: AppTheme.heroGradient, borderRadius: AppTheme.radiusXl),
           child: Column(children: [
-            Text(dateStr, style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 13)),
+            Text(dateStr, style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 13)),
             const SizedBox(height: 8),
             Text('${_votes.length}', style: const TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.w800)),
-            Text('votos registrados', style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 14)),
+            Text('votos registrados', style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 14)),
           ]),
         ),
         Container(
@@ -103,24 +103,50 @@ class _AttendanceOverviewPageState extends State<AttendanceOverviewPage> with Si
         final status = d['status'] as String? ?? 'pendente';
         final liberado = d['liberado'] == true;
         final fac = d['faculdadeName'] as String?;
+        final boarding = (d['boarding'] as Map?)?.cast<String, dynamic>();
+        final dropoff = (d['dropoff'] as Map?)?.cast<String, dynamic>();
+        final showAddresses = status == 'vaiEVolta' || status == 'soIda' || status == 'soVolta';
         return Container(
           margin: const EdgeInsets.only(bottom: 10), padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(color: AppTheme.white, borderRadius: AppTheme.radiusMd, boxShadow: AppTheme.cardShadow,
-            border: liberado ? Border.all(color: AppTheme.success.withOpacity(0.3)) : null),
-          child: Row(children: [
-            Container(width: 42, height: 42, decoration: BoxDecoration(gradient: AppTheme.primaryGradient, borderRadius: BorderRadius.circular(12)),
-              child: Center(child: Text(name[0].toUpperCase(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18)))),
-            const SizedBox(width: 12),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-              Text(fac ?? '-', style: const TextStyle(color: AppTheme.grey500, fontSize: 12)),
-            ])),
-            if (liberado) StatusBadge.released()
-            else StatusBadge(label: _statusLabel(status), color: _statusColor(status)),
+            border: liberado ? Border.all(color: AppTheme.success.withValues(alpha: 0.3)) : null),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Container(width: 42, height: 42, decoration: BoxDecoration(gradient: AppTheme.primaryGradient, borderRadius: BorderRadius.circular(12)),
+                child: Center(child: Text(name[0].toUpperCase(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18)))),
+              const SizedBox(width: 12),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                Text(fac ?? '-', style: const TextStyle(color: AppTheme.grey500, fontSize: 12)),
+              ])),
+              if (liberado) StatusBadge.released()
+              else StatusBadge(label: _statusLabel(status), color: _statusColor(status)),
+            ]),
+            if (showAddresses && (boarding != null || dropoff != null)) ...[
+              const SizedBox(height: 10),
+              const Divider(height: 1, color: AppTheme.grey100),
+              const SizedBox(height: 10),
+              if (boarding != null) _addrLine(Icons.trip_origin_rounded, AppTheme.primary, 'Embarque', boarding),
+              if (boarding != null && dropoff != null) const SizedBox(height: 6),
+              if (dropoff != null) _addrLine(Icons.flag_rounded, AppTheme.accent, 'Desembarque', dropoff),
+            ],
           ]),
         );
       },
     );
+  }
+
+  Widget _addrLine(IconData icon, Color color, String label, Map<String, dynamic> addr) {
+    final aLabel = addr['label'] as String? ?? '';
+    final short = addr['shortAddress'] as String? ?? '';
+    final text = [if (aLabel.isNotEmpty) aLabel, if (short.isNotEmpty) short].join(' · ');
+    return Row(children: [
+      Icon(icon, color: color, size: 15),
+      const SizedBox(width: 8),
+      Text('$label:', style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w700)),
+      const SizedBox(width: 6),
+      Expanded(child: Text(text.isEmpty ? '—' : text, style: const TextStyle(color: AppTheme.grey600, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis)),
+    ]);
   }
 
   String _statusLabel(String s) {

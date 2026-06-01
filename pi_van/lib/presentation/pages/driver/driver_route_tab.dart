@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../../core/routing/app_router.dart';
+import '../../../domain/enums/route_type.dart';
 import '../../theme/app_theme.dart';
 
 class DriverRouteTab extends StatelessWidget {
@@ -61,8 +62,7 @@ class DriverRouteTab extends StatelessWidget {
           icon: Icons.arrow_forward_rounded,
           color: AppTheme.primary,
           gradient: AppTheme.primaryGradient,
-          onBuild: () => Navigator.of(context).pushNamed(AppRoutes.routeBuilder),
-          onStart: () => Navigator.of(context).pushNamed(AppRoutes.activeRoute),
+          onBuild: () => Navigator.of(context).pushNamed(AppRoutes.routeBuilder, arguments: RouteType.ida),
         ),
         const SizedBox(height: 16),
         _routeCard(
@@ -72,8 +72,7 @@ class DriverRouteTab extends StatelessWidget {
           icon: Icons.arrow_back_rounded,
           color: AppTheme.accent,
           gradient: const LinearGradient(colors: [Color(0xFF7C3AED), Color(0xFF8B5CF6)]),
-          onBuild: () => Navigator.of(context).pushNamed(AppRoutes.routeBuilder),
-          onStart: () => Navigator.of(context).pushNamed(AppRoutes.activeRoute),
+          onBuild: () => Navigator.of(context).pushNamed(AppRoutes.routeBuilder, arguments: RouteType.volta),
         ),
       ],
     );
@@ -87,7 +86,6 @@ class DriverRouteTab extends StatelessWidget {
     required Color color,
     required Gradient gradient,
     required VoidCallback onBuild,
-    required VoidCallback onStart,
   }) {
     return Container(
       width: double.infinity,
@@ -140,37 +138,20 @@ class DriverRouteTab extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: onBuild,
-                  icon: const Icon(Icons.build_rounded, size: 18),
-                  label: const Text('Montar'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: color,
-                    side: BorderSide(color: color.withOpacity(0.3)),
-                    shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusMd),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                ),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: onBuild,
+              icon: const Icon(Icons.alt_route_rounded, size: 18),
+              label: const Text('Montar e iniciar'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: color,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusMd),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                elevation: 0,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: onStart,
-                  icon: const Icon(Icons.navigation_rounded, size: 18),
-                  label: const Text('Iniciar'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: color,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusMd),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    elevation: 0,
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),

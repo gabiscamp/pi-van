@@ -102,7 +102,7 @@ class _StudentMapTabState extends State<StudentMapTab> {
                       decoration: BoxDecoration(
                         color: AppTheme.primary,
                         shape: BoxShape.circle,
-                        boxShadow: [BoxShadow(color: AppTheme.primary.withOpacity(0.4), blurRadius: 12, spreadRadius: 2)],
+                        boxShadow: [BoxShadow(color: AppTheme.primary.withValues(alpha: 0.4), blurRadius: 12, spreadRadius: 2)],
                       ),
                       child: const Icon(Icons.directions_bus_rounded, color: Colors.white, size: 28),
                     ),
@@ -150,7 +150,7 @@ class _StudentMapTabState extends State<StudentMapTab> {
             child: Container(
               margin: const EdgeInsets.all(16),
               padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(color: AppTheme.white, borderRadius: AppTheme.radiusXl, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 4))]),
+              decoration: BoxDecoration(color: AppTheme.white, borderRadius: AppTheme.radiusXl, boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 20, offset: const Offset(0, 4))]),
               child: Row(children: [
                 Container(
                   width: 48, height: 48,

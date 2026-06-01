@@ -47,12 +47,12 @@ class RouteService {
       if (data['code'] != 'Ok') return null;
 
       final trip = data['trips'][0];
-      final waypoint_order = (data['waypoints'] as List).map<int>((w) => w['waypoint_index'] as int).toList();
+      final waypointOrder = (data['waypoints'] as List).map<int>((w) => w['waypoint_index'] as int).toList();
       final geometry = trip['geometry']['coordinates'] as List;
       final points = geometry.map<LatLng>((c) => LatLng(lat: (c[1] as num).toDouble(), lng: (c[0] as num).toDouble())).toList();
 
       return TripResult(
-        optimizedOrder: waypoint_order,
+        optimizedOrder: waypointOrder,
         points: points,
         distanceMeters: (trip['distance'] as num).toDouble(),
         durationSeconds: (trip['duration'] as num).toDouble(),
@@ -93,7 +93,7 @@ class RouteResult {
   String get durationText {
     final mins = (durationSeconds / 60).round();
     if (mins >= 60) return '${mins ~/ 60}h ${mins % 60}min';
-    return '${mins} min';
+    return '$mins min';
   }
 }
 

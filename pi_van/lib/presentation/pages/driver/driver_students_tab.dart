@@ -134,7 +134,7 @@ class _DriverStudentsTabState extends State<DriverStudentsTab> {
                   margin: const EdgeInsets.only(bottom: 12), padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: AppTheme.white, borderRadius: AppTheme.radiusLg, boxShadow: AppTheme.cardShadow,
-                    border: liberado ? Border.all(color: AppTheme.success.withOpacity(0.3)) : null,
+                    border: liberado ? Border.all(color: AppTheme.success.withValues(alpha: 0.3)) : null,
                   ),
                   child: Row(children: [
                     Container(width: 48, height: 48,

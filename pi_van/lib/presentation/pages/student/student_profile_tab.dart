@@ -118,7 +118,7 @@ class _StudentProfileTabState extends State<StudentProfileTab> {
                         leading: Container(width: 36, height: 36, decoration: BoxDecoration(gradient: isActive ? AppTheme.primaryGradient : null, color: isActive ? null : AppTheme.grey200, borderRadius: BorderRadius.circular(10)),
                           child: Center(child: Icon(Icons.school_rounded, color: isActive ? Colors.white : AppTheme.grey400, size: 18))),
                         title: Text(sala.name, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: isActive ? AppTheme.primary : AppTheme.grey900)),
-                        subtitle: Text(isActive ? 'Sala ativa' : 'Toque em "Usar" para ativar', style: TextStyle(color: isActive ? AppTheme.primary.withOpacity(0.7) : AppTheme.grey500, fontSize: 11)),
+                        subtitle: Text(isActive ? 'Sala ativa' : 'Toque em "Usar" para ativar', style: TextStyle(color: isActive ? AppTheme.primary.withValues(alpha: 0.7) : AppTheme.grey500, fontSize: 11)),
                         trailing: Row(mainAxisSize: MainAxisSize.min, children: [
                           if (!isActive) GestureDetector(
                             onTap: () { widget.viewModel.selectSala(sala.id); setState(() {}); ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sala ativada!'), backgroundColor: AppTheme.success, behavior: SnackBarBehavior.floating, duration: Duration(seconds: 1))); },
@@ -134,7 +134,7 @@ class _StudentProfileTabState extends State<StudentProfileTab> {
               ]),
             ),
             const SizedBox(height: 16),
-            _menuItem(Icons.location_on_outlined, 'Meu Endereço', user.enderecoCompleto),
+            _menuItem(Icons.location_on_outlined, 'Meus Endereços', 'Casa, trabalho, república...', onTap: () => Navigator.of(context).pushNamed(AppRoutes.manageAddresses)),
             const SizedBox(height: 12),
             _menuItem(Icons.school_outlined, 'Faculdade', user.faculdadeName ?? 'Não definida'),
             const SizedBox(height: 32),
@@ -151,19 +151,23 @@ class _StudentProfileTabState extends State<StudentProfileTab> {
     );
   }
 
-  Widget _menuItem(IconData icon, String title, String subtitle) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppTheme.white, borderRadius: AppTheme.radiusLg, boxShadow: AppTheme.cardShadow),
-      child: Row(children: [
-        Container(width: 44, height: 44, decoration: BoxDecoration(color: AppTheme.primaryLight, borderRadius: AppTheme.radiusMd), child: Icon(icon, color: AppTheme.primary, size: 22)),
-        const SizedBox(width: 14),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-          const SizedBox(height: 2),
-          Text(subtitle, style: const TextStyle(color: AppTheme.grey500, fontSize: 12), maxLines: 2, overflow: TextOverflow.ellipsis),
-        ])),
-      ]),
+  Widget _menuItem(IconData icon, String title, String subtitle, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(color: AppTheme.white, borderRadius: AppTheme.radiusLg, boxShadow: AppTheme.cardShadow),
+        child: Row(children: [
+          Container(width: 44, height: 44, decoration: BoxDecoration(color: AppTheme.primaryLight, borderRadius: AppTheme.radiusMd), child: Icon(icon, color: AppTheme.primary, size: 22)),
+          const SizedBox(width: 14),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+            const SizedBox(height: 2),
+            Text(subtitle, style: const TextStyle(color: AppTheme.grey500, fontSize: 12), maxLines: 2, overflow: TextOverflow.ellipsis),
+          ])),
+          if (onTap != null) const Icon(Icons.chevron_right_rounded, color: AppTheme.grey300),
+        ]),
+      ),
     );
   }
 }

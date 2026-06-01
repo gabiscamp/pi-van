@@ -10,6 +10,7 @@ import '../../domain/repositories/auth_repository.dart';
 import '../../domain/repositories/sala_repository.dart';
 import '../services/geocoding_service.dart';
 import '../services/route_service.dart';
+import '../../domain/usecases/route_builder_service.dart';
 
 class ServiceLocator {
   static final GetIt getIt = GetIt.instance;
@@ -19,6 +20,7 @@ class ServiceLocator {
     getIt.registerLazySingleton<Uuid>(() => const Uuid());
     getIt.registerLazySingleton<GeocodingService>(() => GeocodingService());
     getIt.registerLazySingleton<RouteService>(() => RouteService());
+    getIt.registerLazySingleton<RouteBuilderService>(() => RouteBuilderService());
 
     getIt.registerLazySingleton<AuthRemoteDataSource>(() => AuthRemoteDataSource(
       firebaseAuth: getIt<FirebaseAuth>(), firestore: getIt<FirebaseFirestore>(),

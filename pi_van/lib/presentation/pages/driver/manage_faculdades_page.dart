@@ -49,6 +49,12 @@ class _ManageFaculdadesPageState extends State<ManageFaculdadesPage> {
     if (result == true) _load();
   }
 
+  Future<void> _edit(Faculdade fac) async {
+    final result = await showModalBottomSheet<bool>(context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+      builder: (_) => _AddFacSheet(salaId: _salaId, existing: fac));
+    if (result == true) _load();
+  }
+
   Future<void> _remove(Faculdade fac) async {
     final ok = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: AppTheme.radiusLg),
@@ -86,6 +92,9 @@ class _ManageFaculdadesPageState extends State<ManageFaculdadesPage> {
                   if (f.address.isNotEmpty) Text(f.address, style: const TextStyle(color: AppTheme.grey500, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
                   if (f.latitude != 0) Text('📍 ${f.latitude.toStringAsFixed(4)}, ${f.longitude.toStringAsFixed(4)}', style: const TextStyle(color: AppTheme.success, fontSize: 11)),
                 ])),
+                IconButton(onPressed: () => _edit(f), icon: Container(width: 36, height: 36,
+                  decoration: BoxDecoration(color: AppTheme.infoLight, borderRadius: AppTheme.radiusMd),
+                  child: const Icon(Icons.edit_outlined, color: AppTheme.info, size: 18))),
                 IconButton(onPressed: () => _remove(f), icon: Container(width: 36, height: 36,
                   decoration: BoxDecoration(color: AppTheme.errorLight, borderRadius: AppTheme.radiusMd),
                   child: const Icon(Icons.delete_outline_rounded, color: AppTheme.error, size: 18))),
@@ -100,7 +109,8 @@ class _ManageFaculdadesPageState extends State<ManageFaculdadesPage> {
 
 class _AddFacSheet extends StatefulWidget {
   final String salaId;
-  const _AddFacSheet({required this.salaId});
+  final Faculdade? existing;
+  const _AddFacSheet({required this.salaId, this.existing});
   @override
   State<_AddFacSheet> createState() => _AddFacSheetState();
 }
@@ -117,7 +127,21 @@ class _AddFacSheetState extends State<_AddFacSheet> {
   String? _geoStatus;
 
   @override
-  void dispose() { for (var c in [_nameCtrl, _cepCtrl, _ruaCtrl, _numCtrl, _bairroCtrl, _cidadeCtrl, _ufCtrl]) c.dispose(); super.dispose(); }
+  void initState() {
+    super.initState();
+    final e = widget.existing;
+    if (e != null) {
+      _nameCtrl.text = e.name;
+      // Mostra o endereço atual; a geocodificação será refeita ao salvar
+      // apenas se o motorista editar os campos estruturados.
+      _ruaCtrl.text = e.address;
+    }
+  }
+
+  @override
+  void dispose() { for (var c in [_nameCtrl, _cepCtrl, _ruaCtrl, _numCtrl, _bairroCtrl, _cidadeCtrl, _ufCtrl]) {
+    c.dispose();
+  } super.dispose(); }
 
   Future<void> _buscarCep(String cep) async {
     final limpo = cep.replaceAll(RegExp(r'[^0-9]'), '');
@@ -150,25 +174,44 @@ class _AddFacSheetState extends State<_AddFacSheet> {
     final uf = _ufCtrl.text.trim();
     final addressParts = [if (rua.isNotEmpty) rua, if (num.isNotEmpty) num, if (bairro.isNotEmpty) bairro, if (cidade.isNotEmpty) cidade, if (uf.isNotEmpty) uf];
     final address = addressParts.join(', ');
-    try {
-      final geo = ServiceLocator.getIt<GeocodingService>();
-      final query = address.isNotEmpty ? address : _nameCtrl.text.trim();
-      final result = await geo.geocode(query);
-      if (result != null) {
-        lat = result.lat;
-        lng = result.lng;
-        if (mounted) setState(() => _geoStatus = 'Localização encontrada ✓');
-      } else {
-        if (mounted) setState(() => _geoStatus = 'Localização não encontrada (endereço salvo sem coordenadas)');
+    final editing = widget.existing != null;
+    // Ao editar, parte das coordenadas já existentes; só re-geocodifica se o
+    // motorista preencheu campos estruturados de endereço.
+    if (editing) {
+      lat = widget.existing!.latitude;
+      lng = widget.existing!.longitude;
+    }
+    final shouldGeocode = !editing || cidade.isNotEmpty || bairro.isNotEmpty;
+    if (shouldGeocode) {
+      try {
+        final geo = ServiceLocator.getIt<GeocodingService>();
+        final query = address.isNotEmpty ? address : _nameCtrl.text.trim();
+        final result = await geo.geocode(query);
+        if (result != null) {
+          lat = result.lat;
+          lng = result.lng;
+          if (mounted) setState(() => _geoStatus = 'Localização encontrada ✓');
+        } else {
+          if (mounted) setState(() => _geoStatus = 'Localização não encontrada (endereço salvo sem coordenadas)');
+        }
+      } catch (_) {
+        if (mounted) setState(() => _geoStatus = 'Erro ao geocodificar (endereço salvo sem coordenadas)');
       }
-    } catch (_) {
-      if (mounted) setState(() => _geoStatus = 'Erro ao geocodificar (endereço salvo sem coordenadas)');
     }
 
-    final displayAddress = address.isNotEmpty ? address : _nameCtrl.text.trim();
+    final displayAddress = address.isNotEmpty
+        ? address
+        : (editing ? widget.existing!.address : _nameCtrl.text.trim());
     try {
-      await ServiceLocator.getIt<SalaRepository>().addFaculdade(
-        salaId: widget.salaId, name: _nameCtrl.text.trim(), address: displayAddress, lat: lat, lng: lng);
+      final repo = ServiceLocator.getIt<SalaRepository>();
+      if (editing) {
+        await repo.updateFaculdade(
+          salaId: widget.salaId, faculdadeId: widget.existing!.id,
+          name: _nameCtrl.text.trim(), address: displayAddress, lat: lat, lng: lng);
+      } else {
+        await repo.addFaculdade(
+          salaId: widget.salaId, name: _nameCtrl.text.trim(), address: displayAddress, lat: lat, lng: lng);
+      }
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
@@ -188,7 +231,7 @@ class _AddFacSheetState extends State<_AddFacSheet> {
       child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
         Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppTheme.grey300, borderRadius: BorderRadius.circular(2)))),
         const SizedBox(height: 20),
-        const Text('Nova Faculdade', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+        Text(widget.existing == null ? 'Nova Faculdade' : 'Editar Faculdade', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
         const SizedBox(height: 24),
         const Text('Nome', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
         const SizedBox(height: 8),

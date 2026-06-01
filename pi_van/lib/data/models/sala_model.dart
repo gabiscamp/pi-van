@@ -16,4 +16,9 @@ class SalaModel extends Sala {
     accessCode: map['accessCode'] as String, driverId: map['driverId'] as String,
     driverName: map['driverName'] as String?,
   );
+
+  factory SalaModel.fromEntity(Sala s) => SalaModel(
+    id: s.id, name: s.name, accessCode: s.accessCode,
+    driverId: s.driverId, driverName: s.driverName,
+  );
 }

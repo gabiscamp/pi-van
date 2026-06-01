@@ -51,8 +51,8 @@ class AppButton extends StatelessWidget {
         gradient: isDisabled
             ? LinearGradient(
                 colors: [
-                  const Color(0xFF2563EB).withOpacity(0.5),
-                  const Color(0xFF1D4ED8).withOpacity(0.5),
+                  const Color(0xFF2563EB).withValues(alpha: 0.5),
+                  const Color(0xFF1D4ED8).withValues(alpha: 0.5),
                 ],
               )
             : const LinearGradient(
@@ -64,7 +64,7 @@ class AppButton extends StatelessWidget {
         boxShadow: [
           if (!isDisabled)
             BoxShadow(
-              color: const Color(0xFF2563EB).withOpacity(0.3),
+              color: const Color(0xFF2563EB).withValues(alpha: 0.3),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
