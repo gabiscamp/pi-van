@@ -46,8 +46,10 @@ class _JoinSalaPageState extends State<JoinSalaPage> {
         return;
       }
 
-      // Atualiza o usuário com o salaId
-      widget.viewModel.updateCurrentUser(user.copyWith(salaId: sala.id));
+      // Atualiza o usuário com o salaId e adiciona à lista de salas (salaIds).
+      final newSalaIds = List<String>.from(user.salaIds);
+      if (!newSalaIds.contains(sala.id)) newSalaIds.add(sala.id);
+      widget.viewModel.updateCurrentUser(user.copyWith(salaId: sala.id, salaIds: newSalaIds));
 
       if (!mounted) return;
       Navigator.of(context).pushReplacementNamed(

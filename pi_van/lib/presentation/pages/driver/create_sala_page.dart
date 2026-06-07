@@ -45,9 +45,11 @@ class _CreateSalaPageState extends State<CreateSalaPage> {
         driverName: user.name,
       );
 
-      // Atualiza o salaId no Firestore do user
+      // Atualiza salaId e salaIds no Firestore
       final authRepo = ServiceLocator.getIt<AuthRepository>();
-      final updatedUser = user.copyWith(salaId: sala.id);
+      final newSalaIds = List<String>.from(user.salaIds);
+      if (!newSalaIds.contains(sala.id)) newSalaIds.add(sala.id);
+      final updatedUser = user.copyWith(salaId: sala.id, salaIds: newSalaIds);
       await authRepo.updateUser(updatedUser);
       widget.viewModel.updateCurrentUser(updatedUser);
 
@@ -141,7 +143,7 @@ class _CreateSalaPageState extends State<CreateSalaPage> {
           ),
           child: Column(
             children: [
-              Text('Código de acesso', style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 13)),
+              Text('Código de acesso', style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 13)),
               const SizedBox(height: 12),
               Text(_createdCode!, style: const TextStyle(color: Colors.white, fontSize: 44, fontWeight: FontWeight.w800, letterSpacing: 8)),
               const SizedBox(height: 20),
@@ -154,7 +156,7 @@ class _CreateSalaPageState extends State<CreateSalaPage> {
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: AppTheme.radiusFull),
+                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: AppTheme.radiusFull),
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [

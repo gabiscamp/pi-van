@@ -61,7 +61,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
         child: Center(
           child: AnimatedBuilder(
             listenable: _controller,
-            builder: (_, __) => Opacity(
+            builder: (_, _) => Opacity(
               opacity: _fadeIn.value,
               child: Transform.scale(
                 scale: _scale.value,
@@ -71,7 +71,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
                     Container(
                       width: 80, height: 80,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(24),
                       ),
                       child: const Icon(Icons.directions_bus_rounded, color: Colors.white, size: 44),
@@ -84,14 +84,14 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
                     const SizedBox(height: 8),
                     Text(
                       'Transporte escolar inteligente',
-                      style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 14),
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 14),
                     ),
                     const SizedBox(height: 40),
                     SizedBox(
                       width: 28, height: 28,
                       child: CircularProgressIndicator(
                         strokeWidth: 2.5,
-                        valueColor: AlwaysStoppedAnimation(Colors.white.withOpacity(0.8)),
+                        valueColor: AlwaysStoppedAnimation(Colors.white.withValues(alpha: 0.8)),
                       ),
                     ),
                   ],

@@ -48,6 +48,17 @@ class _SelectFaculdadePageState extends State<SelectFaculdadePage> {
       await authRepo.updateUser(updatedUser);
       widget.viewModel.updateCurrentUser(updatedUser);
 
+      // Também grava a faculdade no documento do aluno dentro da sala,
+      // para que o motorista a veja mesmo sem chamada confirmada.
+      try {
+        await ServiceLocator.getIt<SalaRepository>().setStudentFaculdade(
+          salaId: widget.salaId,
+          studentId: user.id,
+          faculdadeId: _selected!.id,
+          faculdadeName: _selected!.name,
+        );
+      } catch (_) {}
+
       if (!mounted) return;
       Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.studentShell, (r) => false);
     } catch (e) {
@@ -126,7 +137,7 @@ class _SelectFaculdadePageState extends State<SelectFaculdadePage> {
           color: AppTheme.white,
           border: Border.all(color: isSelected ? AppTheme.primary : AppTheme.grey200, width: isSelected ? 2 : 1),
           borderRadius: AppTheme.radiusLg,
-          boxShadow: isSelected ? [BoxShadow(color: AppTheme.primary.withOpacity(0.1), blurRadius: 16, offset: const Offset(0, 4))] : AppTheme.cardShadow,
+          boxShadow: isSelected ? [BoxShadow(color: AppTheme.primary.withValues(alpha: 0.1), blurRadius: 16, offset: const Offset(0, 4))] : AppTheme.cardShadow,
         ),
         child: Row(
           children: [

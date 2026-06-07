@@ -12,4 +12,19 @@ class Sala {
     required this.driverId,
     this.driverName,
   });
+
+  Sala copyWith({
+    String? id,
+    String? name,
+    String? accessCode,
+    String? driverId,
+    String? driverName,
+  }) =>
+      Sala(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        accessCode: accessCode ?? this.accessCode,
+        driverId: driverId ?? this.driverId,
+        driverName: driverName ?? this.driverName,
+      );
 }
