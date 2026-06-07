@@ -87,14 +87,6 @@ class AuthViewModel extends ChangeNotifier {
     } catch (_) {}
   }
 
-  /// Recarrega o usuário do Firestore (atualiza salaIds, faculdade, etc.)
-  Future<void> reloadUser() async {
-    try {
-      final user = await authRepository.getCurrentUser();
-      if (user != null) { _currentUser = user; notifyListeners(); }
-    } catch (_) {}
-  }
-
   Future<void> logout() async {
     await authRepository.logout();
     _currentUser = null; _error = null; notifyListeners();
