@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 /// Serviço de rotas usando OSRM (gratuito, sem API key)
@@ -28,7 +29,7 @@ class RouteService {
         durationSeconds: (route['duration'] as num).toDouble(),
       );
     } catch (e) {
-      print('OSRM route error: $e');
+      debugPrint('OSRM route error: $e');
       return null;
     }
   }
@@ -58,7 +59,7 @@ class RouteService {
         durationSeconds: (trip['duration'] as num).toDouble(),
       );
     } catch (e) {
-      print('OSRM trip error: $e');
+      debugPrint('OSRM trip error: $e');
       return null;
     }
   }

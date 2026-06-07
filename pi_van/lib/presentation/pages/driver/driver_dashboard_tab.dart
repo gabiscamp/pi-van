@@ -63,7 +63,7 @@ class _DriverDashboardTabState extends State<DriverDashboardTab> {
         final status = data['status'] as String?;
         if (status == 'vaiEVolta' || status == 'soIda' || status == 'soVolta') {
           confirmed++;
-        } else if (status == null || status == 'pendente') pending++;
+        } else if (status == null || status == 'pendente') { pending++; }
         if (data['liberado'] == true) {
           released++;
           final nome = data['userName'] as String? ?? 'Aluno';
