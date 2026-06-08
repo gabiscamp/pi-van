@@ -19,8 +19,7 @@ Para configurar Firebase, siga [docs/firebase-setup.md](docs/firebase-setup.md).
 
 - `main`: producao
 - `hml`: integracao
-- `sprint_1`: sprint atual
-- `sprint_1/feature-login`: branches de task
+- `sprint_4`: sprint atual
 
 ## Docs
 
