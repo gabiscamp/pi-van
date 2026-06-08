@@ -57,7 +57,6 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
   String? _nextDistance;
 
   // === Estado da rota de volta ===
-  final DateTime _sessionStart = DateTime.now();
   Map<String, Faculdade> _faculdadesCache = {};
   final Map<String, Set<String>> _facVaiVoltaStudents = {};
   final Set<String> _liberadoUserIds = {};
@@ -199,12 +198,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
       final facId = data['faculdadeId'] as String?;
       final facNome = data['faculdadeName'] as String?;
 
-      // Só notifica se o aluno foi liberado nesta sessão de rota
-      final liberadoAt = data['liberadoAt'] as String?;
-      final liberadoTime = liberadoAt != null ? DateTime.tryParse(liberadoAt) : null;
-      if (liberadoTime != null && liberadoTime.isAfter(_sessionStart)) {
-        NotificationService.showLiberado(userId, nome, facNome);
-      }
+      NotificationService.showLiberado(userId, nome, facNome);
       _addStudentToRoute(userId, nome, data);
 
       if (_pendingFaculdadeArrival != null && facId != null) {

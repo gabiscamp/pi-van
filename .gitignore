@@ -34,3 +34,9 @@ Thumbs.db
 .env.*
 
 **/node_modules/
+
+# Firebase CLI cache
+**/.firebase/
+
+# Arquivos temporários
+*.zip

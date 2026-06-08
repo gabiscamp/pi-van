@@ -26,6 +26,27 @@ class AuthRemoteDataSource {
         latitude: latitude, longitude: longitude,
       );
       await firestore.collection('users').doc(uid).set(user.toJson());
+
+      // Cria o endereço de casa na subcoleção addresses/ para que o aluno
+      // já possa marcar chamada imediatamente após o cadastro.
+      if (logradouro.isNotEmpty || bairro.isNotEmpty) {
+        final addrRef = firestore.collection('users').doc(uid).collection('addresses').doc();
+        await addrRef.set({
+          'id': addrRef.id,
+          'label': 'Casa',
+          'logradouro': logradouro,
+          'numero': numero,
+          'complemento': complemento,
+          'bairro': bairro,
+          'cep': cep,
+          'localidade': localidade,
+          'uf': uf,
+          'latitude': latitude,
+          'longitude': longitude,
+          'isDefault': true,
+        });
+      }
+
       return user;
     } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') throw Exception('A senha é muito fraca.');

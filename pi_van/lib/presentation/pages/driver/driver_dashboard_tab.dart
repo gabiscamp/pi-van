@@ -27,9 +27,8 @@ class _DriverDashboardTabState extends State<DriverDashboardTab> {
   int _pendingToday = 0;
   int _releasedToday = 0;
   List<Map<String, dynamic>> _recentReleases = [];
+  // Controla quais alunos já foram notificados nesta sessão para evitar duplicatas.
   final Set<String> _notifiedLiberados = {};
-  // Só notifica liberações que aconteceram APÓS o motorista abrir o app.
-  final DateTime _sessionStart = DateTime.now();
 
   String get _today {
     final now = DateTime.now();
@@ -106,14 +105,10 @@ class _DriverDashboardTabState extends State<DriverDashboardTab> {
           final nome = data['userName'] as String? ?? 'Aluno';
           final fac = data['faculdadeName'] as String? ?? '';
           releases.add({'name': nome, 'time': data['liberadoAt'] ?? '', 'faculdade': fac});
-          // Notifica só se foi liberado NESTA sessão (evita re-notificar dados antigos)
+          // Notifica uma vez por aluno por sessão do app
           if (!_notifiedLiberados.contains(userId)) {
-            final liberadoAt = data['liberadoAt'] as String?;
-            final liberadoTime = liberadoAt != null ? DateTime.tryParse(liberadoAt) : null;
-            if (liberadoTime != null && liberadoTime.isAfter(_sessionStart)) {
-              _notifiedLiberados.add(userId);
-              NotificationService.showLiberado(userId, nome, fac);
-            }
+            _notifiedLiberados.add(userId);
+            NotificationService.showLiberado(userId, nome, fac);
           }
         }
       });
