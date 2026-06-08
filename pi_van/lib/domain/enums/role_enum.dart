@@ -1,4 +1,1 @@
-enum Role {
-  motorista,
-  estudante,
-}
+enum Role { motorista, estudante }

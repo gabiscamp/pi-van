@@ -1,0 +1,27 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "app-de-van-5f05d",
+          "appId": "1:688654083193:android:ee6d2c056025c909ade0a8",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "app-de-van-5f05d",
+          "configurations": {
+            "android": "1:688654083193:android:ee6d2c056025c909ade0a8",
+            "ios": "1:688654083193:ios:62921e79299bfe9dade0a8"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "rewrites": [{ "source": "**", "destination": "/index.html" }]
+  }
+}
