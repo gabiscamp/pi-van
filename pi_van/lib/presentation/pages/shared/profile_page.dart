@@ -41,7 +41,7 @@ class ProfilePage extends StatelessWidget {
                     ),
                     child: Center(
                       child: Text(
-                        user.primeiroNome[0].toUpperCase(),
+                        user.primeiroNome.isNotEmpty ? user.primeiroNome[0].toUpperCase() : '?',
                         style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w800),
                       ),
                     ),

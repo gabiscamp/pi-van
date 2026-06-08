@@ -28,6 +28,8 @@ class _DriverDashboardTabState extends State<DriverDashboardTab> {
   int _releasedToday = 0;
   List<Map<String, dynamic>> _recentReleases = [];
   final Set<String> _notifiedLiberados = {};
+  // Só notifica liberações que aconteceram APÓS o motorista abrir o app.
+  final DateTime _sessionStart = DateTime.now();
 
   String get _today {
     final now = DateTime.now();
@@ -98,20 +100,25 @@ class _DriverDashboardTabState extends State<DriverDashboardTab> {
         final status = data['status'] as String?;
         if (status == 'vaiEVolta' || status == 'soIda' || status == 'soVolta') {
           confirmed++;
-        } else if (status == null || status == 'pendente') pending++;
+        } else if (status == null || status == 'pendente') { pending++; }
         if (data['liberado'] == true) {
           released++;
           final nome = data['userName'] as String? ?? 'Aluno';
           final fac = data['faculdadeName'] as String? ?? '';
           releases.add({'name': nome, 'time': data['liberadoAt'] ?? '', 'faculdade': fac});
-          // Notificação sonora (apenas uma vez por aluno)
+          // Notifica só se foi liberado NESTA sessão (evita re-notificar dados antigos)
           if (!_notifiedLiberados.contains(userId)) {
-            _notifiedLiberados.add(userId);
-            NotificationService.showLiberado(userId, nome, fac);
+            final liberadoAt = data['liberadoAt'] as String?;
+            final liberadoTime = liberadoAt != null ? DateTime.tryParse(liberadoAt) : null;
+            if (liberadoTime != null && liberadoTime.isAfter(_sessionStart)) {
+              _notifiedLiberados.add(userId);
+              NotificationService.showLiberado(userId, nome, fac);
+            }
           }
         }
       });
 
+      if (!mounted) return;
       setState(() {
         _confirmedToday = confirmed;
         _pendingToday = _totalStudents - votes.length + pending;

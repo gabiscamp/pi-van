@@ -17,7 +17,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // Configura status bar
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.dark,
@@ -26,7 +25,6 @@ void main() async {
   ServiceLocator.setup();
   await NotificationService.init();
 
-  // Cria o ViewModel UMA VEZ, fora do build
   final authRepository = ServiceLocator.getIt<AuthRepository>();
   final viewModel = AuthViewModel(
     loginUseCase: LoginUseCase(authRepository),

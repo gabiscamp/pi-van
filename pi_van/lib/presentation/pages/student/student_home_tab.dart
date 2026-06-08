@@ -236,6 +236,7 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
             children: [
               if (multiSalas) _buildSalaSelector(user.salaIds, user.salaId!),
               if (multiSalas) const SizedBox(height: 12),
+              _buildAttendanceReminder(),
               _buildWelcomeHeader(user.primeiroNome),
               const SizedBox(height: 24),
               _buildInfoCards(user),
@@ -254,6 +255,41 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  /// Lembrete exibido quando o aluno ainda não marcou chamada no dia.
+  /// Aparece a partir das 6h da manhã.
+  Widget _buildAttendanceReminder() {
+    final hour = DateTime.now().hour;
+    final naoPrecisa = _selectedStatus != null &&
+        _selectedStatus != AttendanceStatus.pendente;
+    if (naoPrecisa || hour < 6) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppTheme.warningLight,
+          borderRadius: AppTheme.radiusMd,
+          border: Border.all(color: AppTheme.warning.withValues(alpha: 0.3)),
+        ),
+        child: Row(children: [
+          const Icon(Icons.notifications_active_rounded,
+              color: AppTheme.warning, size: 20),
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Text(
+              'Não esqueça de marcar sua chamada hoje!',
+              style: TextStyle(
+                  color: AppTheme.warning,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13),
+            ),
+          ),
+        ]),
       ),
     );
   }

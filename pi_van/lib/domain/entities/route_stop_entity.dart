@@ -75,7 +75,7 @@ class RouteStopEntity {
   /// Quantos alunos esta parada movimenta (1 para aluno, N para faculdade).
   int get passengerCount => isFaculdade ? passengers.length : 1;
 
-  RouteStopEntity copyWith({StopStatus? status}) => RouteStopEntity(
+  RouteStopEntity copyWith({StopStatus? status, List<StopPassenger>? passengers}) => RouteStopEntity(
         id: id,
         kind: kind,
         name: name,
@@ -84,7 +84,7 @@ class RouteStopEntity {
         longitude: longitude,
         faculdadeName: faculdadeName,
         addressLabel: addressLabel,
-        passengers: passengers,
+        passengers: passengers ?? this.passengers,
         status: status ?? this.status,
       );
 }

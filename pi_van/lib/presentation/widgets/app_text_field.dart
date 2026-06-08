@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class AppTextField extends StatefulWidget {
   final TextEditingController controller;
@@ -13,8 +14,8 @@ class AppTextField extends StatefulWidget {
   final int? maxLines;
   final int? minLines;
   
-  // 1. ADICIONADO AQUI: A variável que vai receber a função
-  final void Function(String)? onChanged; 
+  final void Function(String)? onChanged;
+  final List<TextInputFormatter>? inputFormatters;
 
   const AppTextField({
     super.key,
@@ -29,9 +30,8 @@ class AppTextField extends StatefulWidget {
     this.validator,
     this.maxLines = 1,
     this.minLines,
-    
-    // 2. ADICIONADO AQUI: O parâmetro no construtor
-    this.onChanged, 
+    this.onChanged,
+    this.inputFormatters,
   });
 
   @override
@@ -56,9 +56,8 @@ class _AppTextFieldState extends State<AppTextField> {
       maxLines: _obscureText ? 1 : widget.maxLines,
       minLines: widget.minLines,
       validator: widget.validator,
-      
-      // 3. ADICIONADO AQUI: Repassando a função para o TextFormField nativo
-      onChanged: widget.onChanged, 
+      onChanged: widget.onChanged,
+      inputFormatters: widget.inputFormatters,
       
       decoration: InputDecoration(
         labelText: widget.label,

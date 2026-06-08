@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../theme/app_theme.dart';
 import '../../../core/di/service_locator.dart';
 import '../../../core/routing/app_router.dart';
@@ -20,6 +21,9 @@ class RouteBuilderPage extends StatefulWidget {
 class _RouteBuilderPageState extends State<RouteBuilderPage> {
   RouteType _type = RouteType.ida;
   List<RouteStopEntity> _stops = [];
+  // Ordem canônica construída pelo servidor — nunca alterada por drag ou otimização.
+  // Usada como base para o TSP, garantindo que "Otimizar" sempre encontra o melhor caminho.
+  List<RouteStopEntity> _originalStops = [];
   bool _loading = true;
   bool _optimizing = false;
   String? _routeInfo;
@@ -64,6 +68,12 @@ class _RouteBuilderPageState extends State<RouteBuilderPage> {
         );
         if (status == AttendanceStatus.pendente || status == AttendanceStatus.naoVai) return;
 
+        // Rota de volta: só inclui alunos que já marcaram "Estou liberado"
+        if (_type == RouteType.volta) {
+          final liberado = data['liberado'] as bool? ?? false;
+          if (!liberado) return;
+        }
+
         inputs.add(RoutePassengerInput(
           userId: userId,
           name: data['userName'] as String? ?? 'Aluno',
@@ -77,7 +87,13 @@ class _RouteBuilderPageState extends State<RouteBuilderPage> {
 
       final stops = builder.buildStops(type: _type, passengers: inputs, faculdades: faculdades);
 
-      if (mounted) setState(() { _stops = stops; _loading = false; });
+      if (mounted) {
+        setState(() {
+          _stops = stops;
+          _originalStops = List.from(stops);
+          _loading = false;
+        });
+      }
     } catch (e) {
       if (mounted) setState(() => _loading = false);
       debugPrint('Error loading stops: $e');
@@ -98,13 +114,40 @@ class _RouteBuilderPageState extends State<RouteBuilderPage> {
     try {
       final routeService = ServiceLocator.getIt<RouteService>();
 
+      // Usa sempre a ordem original do servidor como base para o TSP.
+      final base = _originalStops.isNotEmpty ? _originalStops : _stops;
+
       // Divide em duas fases pela ordem natural construída pelo builder.
       // Ida:   [pickups...] + [faculdades...]
       // Volta: [faculdades...] + [dropoffs...]
-      final firstPhase = _stops.where((s) =>
+      final firstPhase = base.where((s) =>
           _type == RouteType.ida ? !s.isFaculdade : s.isFaculdade).toList();
-      final secondPhase = _stops.where((s) =>
+      final secondPhase = base.where((s) =>
           _type == RouteType.ida ? s.isFaculdade : !s.isFaculdade).toList();
+
+      // Tenta obter localização atual para iniciar pela parada mais próxima.
+      Position? currentPos;
+      try {
+        currentPos = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(accuracy: LocationAccuracy.low),
+        ).timeout(const Duration(seconds: 5));
+      } catch (_) {}
+
+      // Move a parada mais próxima ao motorista para o início da 1ª fase.
+      if (currentPos != null && firstPhase.length > 1) {
+        var nearestIdx = 0;
+        var nearestDist = double.infinity;
+        for (var i = 0; i < firstPhase.length; i++) {
+          final d = RouteService.haversineDistance(
+            currentPos.latitude, currentPos.longitude,
+            firstPhase[i].latitude, firstPhase[i].longitude,
+          );
+          if (d < nearestDist) { nearestDist = d; nearestIdx = i; }
+        }
+        if (nearestIdx != 0) {
+          firstPhase.insert(0, firstPhase.removeAt(nearestIdx));
+        }
+      }
 
       final optimizedFirst = await _optimizePhase(routeService, firstPhase);
       final optimizedSecond = await _optimizePhase(routeService, secondPhase);
@@ -158,10 +201,12 @@ class _RouteBuilderPageState extends State<RouteBuilderPage> {
     final waypoints = phase.map((s) => LatLng(lat: s.latitude, lng: s.longitude)).toList();
     final result = await service.optimizeRoute(waypoints, sourceIndex: 0);
     if (result == null) return phase;
-    final reordered = <RouteStopEntity>[];
-    for (final idx in result.optimizedOrder) {
-      if (idx < phase.length) reordered.add(phase[idx]);
-    }
+    // result.optimizedOrder[i] = posição no trajeto do waypoint de entrada i.
+    // Ordena os índices de entrada pela posição no trajeto para reconstruir
+    // a sequência correta (abordagem correta para qualquer permutação).
+    final indices = List.generate(phase.length, (i) => i);
+    indices.sort((a, b) => result.optimizedOrder[a].compareTo(result.optimizedOrder[b]));
+    final reordered = indices.map((i) => phase[i]).toList();
     return reordered.length == phase.length ? reordered : phase;
   }
 
@@ -235,7 +280,7 @@ class _RouteBuilderPageState extends State<RouteBuilderPage> {
   Widget _buildEmptyState() {
     final hint = _type == RouteType.ida
         ? 'Nenhum aluno marcou ida hoje (com endereço de embarque e coordenadas).'
-        : 'Nenhum aluno marcou volta hoje (com endereço de desembarque e coordenadas).';
+        : 'Nenhum aluno está liberado ainda. A rota de volta só é montada com alunos que marcaram "Estou liberado" no app.';
     return Center(child: Padding(padding: const EdgeInsets.all(40), child: Column(mainAxisSize: MainAxisSize.min, children: [
       Container(width: 80, height: 80, decoration: BoxDecoration(color: AppTheme.primaryLight, borderRadius: BorderRadius.circular(24)),
         child: const Icon(Icons.alt_route_rounded, color: AppTheme.primary, size: 40)),

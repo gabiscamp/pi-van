@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../../core/routing/app_router.dart';
 import '../../../core/di/service_locator.dart';
@@ -43,9 +44,17 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
+  static bool _isValidEmail(String email) =>
+      RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]{2,}$').hasMatch(email.trim());
+
   void _nextPage() {
-    if (_nameCtrl.text.isEmpty || _emailCtrl.text.isEmpty || _passwordCtrl.text.isEmpty || _confirmCtrl.text.isEmpty) {
-      _showError('Preencha todos os campos');
+    if (_nameCtrl.text.trim().isEmpty || _emailCtrl.text.trim().isEmpty ||
+        _passwordCtrl.text.isEmpty || _confirmCtrl.text.isEmpty) {
+      _showError('Preencha todos os campos obrigatórios');
+      return;
+    }
+    if (!_isValidEmail(_emailCtrl.text)) {
+      _showError('Digite um email válido (ex: nome@email.com)');
       return;
     }
     if (_passwordCtrl.text != _confirmCtrl.text) {
@@ -226,7 +235,13 @@ class _RegisterPageState extends State<RegisterPage> {
           AppTextField(controller: _emailCtrl, label: 'seu@email.com', keyboardType: TextInputType.emailAddress, prefixIcon: Icons.email_outlined),
           const SizedBox(height: 16),
           _label('Telefone'),
-          AppTextField(controller: _phoneCtrl, label: '(31) 99999-9999', keyboardType: TextInputType.phone, prefixIcon: Icons.phone_outlined),
+          AppTextField(
+            controller: _phoneCtrl,
+            label: '(31) 99999-9999',
+            keyboardType: TextInputType.phone,
+            prefixIcon: Icons.phone_outlined,
+            inputFormatters: [_BrPhoneFormatter()],
+          ),
           const SizedBox(height: 16),
           _label('Senha'),
           AppTextField(controller: _passwordCtrl, label: 'Mínimo 6 caracteres', obscureText: true, prefixIcon: Icons.lock_outlined),
@@ -316,6 +331,29 @@ class _RegisterPageState extends State<RegisterPage> {
     padding: const EdgeInsets.only(bottom: 8),
     child: Text(text, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
   );
+}
+
+/// Formata telefone brasileiro em tempo real: (XX) XXXXX-XXXX
+class _BrPhoneFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    final digits = newValue.text.replaceAll(RegExp(r'\D'), '');
+    final limited = digits.length > 11 ? digits.substring(0, 11) : digits;
+
+    final buf = StringBuffer();
+    for (var i = 0; i < limited.length; i++) {
+      if (i == 0) buf.write('(');
+      buf.write(limited[i]);
+      if (i == 1) buf.write(') ');
+      if (i == 6) buf.write('-');
+    }
+
+    final result = buf.toString();
+    return TextEditingValue(
+      text: result,
+      selection: TextSelection.collapsed(offset: result.length),
+    );
+  }
 }
 
 class _RoleOption extends StatelessWidget {
